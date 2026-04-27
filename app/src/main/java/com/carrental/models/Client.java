@@ -8,6 +8,7 @@ public class Client {
     private String telephone;
     private int userId;
 
+    // Constructeur complet avec userId
     public Client(int id, String nom, String prenom, String email, String telephone, int userId) {
         this.id = id;
         this.nom = nom;
@@ -15,6 +16,16 @@ public class Client {
         this.email = email;
         this.telephone = telephone;
         this.userId = userId;
+    }
+
+    // Constructeur sans userId (pour la compatibilité)
+    public Client(int id, String nom, String prenom, String email, String telephone) {
+        this.id = id;
+        this.nom = nom;
+        this.prenom = prenom;
+        this.email = email;
+        this.telephone = telephone;
+        this.userId = -1;
     }
 
     public int getId() { return id; }

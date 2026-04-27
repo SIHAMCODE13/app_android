@@ -8,8 +8,6 @@ import com.carrental.models.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings("all")
-
 public class DatabaseQueries {
     private DatabaseHelper dbHelper;
     private SQLiteDatabase database;

@@ -57,6 +57,11 @@ public class LoginActivity extends AppCompatActivity {
                 com.carrental.models.Client client = dbQueries.getClientByUserId(user.getId());
                 if (client != null) {
                     clientId = client.getId();
+                } else {
+                    // Si le client n'existe pas dans la table Client, le créer
+                    Toast.makeText(this, "Erreur: Profil client incomplet", Toast.LENGTH_SHORT).show();
+                    dbQueries.close();
+                    return;
                 }
             }
 

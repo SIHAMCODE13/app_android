@@ -86,29 +86,34 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        String nom = "", prenom = "", email = "", telephone = "";
-
-        if (role.equals("Client")) {
-            nom = etNom.getText().toString().trim();
-            prenom = etPrenom.getText().toString().trim();
-            email = etEmail.getText().toString().trim();
-            telephone = etTelephone.getText().toString().trim();
-
-            if (nom.isEmpty() || prenom.isEmpty() || email.isEmpty() || telephone.isEmpty()) {
-                tvError.setText("Veuillez remplir tous les champs client");
-                tvError.setVisibility(View.VISIBLE);
-                return;
-            }
-        }
-
         dbQueries.open();
 
         if (dbQueries.registerUser(username, password, role)) {
             int userId = dbQueries.getLastInsertedUserId();
 
             if (role.equals("Client")) {
+                String nom = etNom.getText().toString().trim();
+                String prenom = etPrenom.getText().toString().trim();
+                String email = etEmail.getText().toString().trim();
+                String telephone = etTelephone.getText().toString().trim();
+
+                if (nom.isEmpty() || prenom.isEmpty() || email.isEmpty() || telephone.isEmpty()) {
+                    tvError.setText("Veuillez remplir tous les champs client");
+                    tvError.setVisibility(View.VISIBLE);
+                    dbQueries.close();
+                    return;
+                }
+
+                // Créer le client avec le userId
                 Client client = new Client(0, nom, prenom, email, telephone, userId);
-                dbQueries.addClient(client);
+                long clientResult = dbQueries.addClient(client);
+
+                if (clientResult == -1) {
+                    tvError.setText("Erreur lors de la création du client");
+                    tvError.setVisibility(View.VISIBLE);
+                    dbQueries.close();
+                    return;
+                }
             }
 
             Toast.makeText(this, "Inscription réussie", Toast.LENGTH_SHORT).show();
