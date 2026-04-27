@@ -56,17 +56,16 @@ public class PaymentHistoryActivity extends AppCompatActivity {
 
         dbQueries = new DatabaseQueries(this);
 
-        // Pour les clients, cacher le filtre
-        if (sessionManager.isClient()) {
-            spFilter.setVisibility(View.GONE);
-            btnFilter.setVisibility(View.GONE);
-        } else {
+        if (!sessionManager.isClient()) {
             String[] filters = {"Tous", "Payés", "En attente"};
             ArrayAdapter<String> adapterSpinner = new ArrayAdapter<>(this,
                     android.R.layout.simple_spinner_item, filters);
             adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spFilter.setAdapter(adapterSpinner);
             btnFilter.setOnClickListener(v -> loadPayments());
+        } else {
+            spFilter.setVisibility(View.GONE);
+            btnFilter.setVisibility(View.GONE);
         }
 
         loadPayments();
@@ -76,9 +75,8 @@ public class PaymentHistoryActivity extends AppCompatActivity {
         dbQueries.open();
         List<Reservation> reservations;
 
-        // Si c'est un client, ne voir que ses propres paiements
         if (sessionManager.isClient()) {
-            int clientId = sessionManager.getUserId();
+            int clientId = sessionManager.getClientId();
             reservations = dbQueries.getClientReservations(clientId);
         } else {
             reservations = dbQueries.getAllReservations();
@@ -89,7 +87,7 @@ public class PaymentHistoryActivity extends AppCompatActivity {
         paymentList = new ArrayList<>();
 
         String filter = "Tous";
-        if (!sessionManager.isClient()) {
+        if (!sessionManager.isClient() && spFilter.getSelectedItem() != null) {
             filter = spFilter.getSelectedItem().toString();
         }
 

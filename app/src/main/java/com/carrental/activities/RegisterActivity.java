@@ -6,6 +6,7 @@ import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 import com.carrental.R;
 import com.carrental.database.DatabaseQueries;
+import com.carrental.models.Client;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -32,14 +33,12 @@ public class RegisterActivity extends AppCompatActivity {
         btnRegister = findViewById(R.id.btnRegister);
         tvError = findViewById(R.id.tvError);
 
-        // Champs spécifiques au client
         etNom = findViewById(R.id.etNom);
         etPrenom = findViewById(R.id.etPrenom);
         etEmail = findViewById(R.id.etEmail);
         etTelephone = findViewById(R.id.etTelephone);
         clientFieldsLayout = findViewById(R.id.clientFieldsLayout);
 
-        // Masquer les champs client par défaut (visible seulement pour le rôle Client)
         clientFieldsLayout.setVisibility(View.GONE);
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, roles);
@@ -87,12 +86,13 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        // Pour les clients, vérifier les champs supplémentaires
+        String nom = "", prenom = "", email = "", telephone = "";
+
         if (role.equals("Client")) {
-            String nom = etNom.getText().toString().trim();
-            String prenom = etPrenom.getText().toString().trim();
-            String email = etEmail.getText().toString().trim();
-            String telephone = etTelephone.getText().toString().trim();
+            nom = etNom.getText().toString().trim();
+            prenom = etPrenom.getText().toString().trim();
+            email = etEmail.getText().toString().trim();
+            telephone = etTelephone.getText().toString().trim();
 
             if (nom.isEmpty() || prenom.isEmpty() || email.isEmpty() || telephone.isEmpty()) {
                 tvError.setText("Veuillez remplir tous les champs client");
@@ -103,22 +103,11 @@ public class RegisterActivity extends AppCompatActivity {
 
         dbQueries.open();
 
-        // Créer d'abord l'utilisateur
         if (dbQueries.registerUser(username, password, role)) {
-            // Si c'est un client, créer aussi l'entrée dans la table Client
+            int userId = dbQueries.getLastInsertedUserId();
+
             if (role.equals("Client")) {
-                String nom = etNom.getText().toString().trim();
-                String prenom = etPrenom.getText().toString().trim();
-                String email = etEmail.getText().toString().trim();
-                String telephone = etTelephone.getText().toString().trim();
-
-                // Récupérer l'ID de l'utilisateur créé
-                int userId = dbQueries.getUser(username).getId();
-
-                // Créer le client avec le même ID
-                com.carrental.models.Client client = new com.carrental.models.Client(
-                        userId, nom, prenom, email, telephone
-                );
+                Client client = new Client(0, nom, prenom, email, telephone, userId);
                 dbQueries.addClient(client);
             }
 

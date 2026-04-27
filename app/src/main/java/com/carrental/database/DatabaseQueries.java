@@ -67,6 +67,16 @@ public class DatabaseQueries {
         return result != -1;
     }
 
+    public int getLastInsertedUserId() {
+        Cursor cursor = database.rawQuery("SELECT last_insert_rowid()", null);
+        int id = -1;
+        if (cursor.moveToFirst()) {
+            id = cursor.getInt(0);
+        }
+        cursor.close();
+        return id;
+    }
+
     // Car queries
     public long addCar(Car car) {
         ContentValues values = new ContentValues();
@@ -155,6 +165,7 @@ public class DatabaseQueries {
         values.put(DatabaseHelper.COL_CLIENT_PRENOM, client.getPrenom());
         values.put(DatabaseHelper.COL_CLIENT_EMAIL, client.getEmail());
         values.put(DatabaseHelper.COL_CLIENT_TELEPHONE, client.getTelephone());
+        values.put(DatabaseHelper.COL_CLIENT_USER_ID, client.getUserId());
 
         return database.insert(DatabaseHelper.TABLE_CLIENT, null, values);
     }
@@ -197,7 +208,8 @@ public class DatabaseQueries {
                         cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_NOM)),
                         cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_PRENOM)),
                         cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_EMAIL)),
-                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_TELEPHONE))
+                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_TELEPHONE)),
+                        cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_USER_ID))
                 );
                 clients.add(client);
             } while (cursor.moveToNext());
@@ -217,7 +229,28 @@ public class DatabaseQueries {
                     cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_NOM)),
                     cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_PRENOM)),
                     cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_EMAIL)),
-                    cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_TELEPHONE))
+                    cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_TELEPHONE)),
+                    cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_USER_ID))
+            );
+            cursor.close();
+            return client;
+        }
+        return null;
+    }
+
+    public Client getClientByUserId(int userId) {
+        Cursor cursor = database.query(DatabaseHelper.TABLE_CLIENT, null,
+                DatabaseHelper.COL_CLIENT_USER_ID + "=?", new String[]{String.valueOf(userId)},
+                null, null, null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            Client client = new Client(
+                    cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_ID)),
+                    cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_NOM)),
+                    cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_PRENOM)),
+                    cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_EMAIL)),
+                    cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_TELEPHONE)),
+                    cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_USER_ID))
             );
             cursor.close();
             return client;
@@ -327,8 +360,7 @@ public class DatabaseQueries {
         cursor.close();
         return reservations;
     }
-    // Ajoutez cette méthode dans DatabaseQueries.java
-// Assurez-vous que cette méthode existe et est correcte
+
     public List<Reservation> getClientReservations(int clientId) {
         List<Reservation> reservations = new ArrayList<>();
         String query = "SELECT r.*, c." + DatabaseHelper.COL_CLIENT_NOM + ", c." + DatabaseHelper.COL_CLIENT_PRENOM +
@@ -342,39 +374,23 @@ public class DatabaseQueries {
 
         if (cursor.moveToFirst()) {
             do {
-                int colId = cursor.getColumnIndex(DatabaseHelper.COL_RES_ID);
-                int colClientId = cursor.getColumnIndex(DatabaseHelper.COL_RES_CLIENT_ID);
-                int colCarId = cursor.getColumnIndex(DatabaseHelper.COL_RES_CAR_ID);
-                int colDateDebut = cursor.getColumnIndex(DatabaseHelper.COL_RES_DATE_DEBUT);
-                int colDateFin = cursor.getColumnIndex(DatabaseHelper.COL_RES_DATE_FIN);
-                int colPrix = cursor.getColumnIndex(DatabaseHelper.COL_RES_PRIX_TOTAL);
-                int colStatut = cursor.getColumnIndex(DatabaseHelper.COL_RES_STATUT);
-                int colClientNom = cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_NOM);
-                int colClientPrenom = cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_PRENOM);
-                int colCarMarque = cursor.getColumnIndex(DatabaseHelper.COL_CAR_MARQUE);
-                int colCarModele = cursor.getColumnIndex(DatabaseHelper.COL_CAR_MODELE);
-
                 Reservation reservation = new Reservation(
-                        cursor.getInt(colId),
-                        cursor.getInt(colClientId),
-                        cursor.getInt(colCarId),
-                        cursor.getString(colDateDebut),
-                        cursor.getString(colDateFin),
-                        cursor.getDouble(colPrix),
-                        cursor.getString(colStatut)
+                        cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COL_RES_ID)),
+                        cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COL_RES_CLIENT_ID)),
+                        cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COL_RES_CAR_ID)),
+                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_RES_DATE_DEBUT)),
+                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_RES_DATE_FIN)),
+                        cursor.getDouble(cursor.getColumnIndex(DatabaseHelper.COL_RES_PRIX_TOTAL)),
+                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_RES_STATUT))
                 );
-
-                if (colClientNom >= 0 && colClientPrenom >= 0) {
-                    reservation.setClientName(cursor.getString(colClientPrenom) + " " + cursor.getString(colClientNom));
-                }
-
-                if (colCarMarque >= 0 && colCarModele >= 0) {
-                    reservation.setCarName(cursor.getString(colCarMarque) + " " + cursor.getString(colCarModele));
-                }
-
+                reservation.setClientName(cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_PRENOM)) + " " +
+                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_NOM)));
+                reservation.setCarName(cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CAR_MARQUE)) + " " +
+                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CAR_MODELE)));
                 reservations.add(reservation);
             } while (cursor.moveToNext());
         }
         cursor.close();
         return reservations;
-    }}
+    }
+}

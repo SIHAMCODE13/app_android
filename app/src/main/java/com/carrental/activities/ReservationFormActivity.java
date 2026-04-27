@@ -29,6 +29,7 @@ public class ReservationFormActivity extends AppCompatActivity {
     private List<Client> clientList;
     private List<Car> carList;
     private boolean isClientMode = false;
+    private int forcedClientId = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +38,10 @@ public class ReservationFormActivity extends AppCompatActivity {
 
         sessionManager = new SessionManager(this);
         isClientMode = sessionManager.isClient();
+
+        if (isClientMode) {
+            forcedClientId = sessionManager.getClientId();
+        }
 
         spClient = findViewById(R.id.spClient);
         spCar = findViewById(R.id.spCar);
@@ -48,10 +53,12 @@ public class ReservationFormActivity extends AppCompatActivity {
 
         dbQueries = new DatabaseQueries(this);
 
-        // Si c'est un client, cacher le spinner client et utiliser son propre ID
         if (isClientMode) {
             spClient.setVisibility(View.GONE);
-            findViewById(R.id.tvClientLabel).setVisibility(View.GONE);
+            TextView tvClientLabel = findViewById(R.id.tvClientLabel);
+            if (tvClientLabel != null) {
+                tvClientLabel.setVisibility(View.GONE);
+            }
         }
 
         etDateDebut.setOnClickListener(v -> showDatePickerDialog(etDateDebut));
@@ -78,7 +85,6 @@ public class ReservationFormActivity extends AppCompatActivity {
         carList = dbQueries.getAllCars();
         dbQueries.close();
 
-        // Spinner des clients (visible seulement pour admin/employé)
         if (!isClientMode) {
             ArrayAdapter<Client> clientAdapter = new ArrayAdapter<>(this,
                     android.R.layout.simple_spinner_item, clientList);
@@ -86,7 +92,6 @@ public class ReservationFormActivity extends AppCompatActivity {
             spClient.setAdapter(clientAdapter);
         }
 
-        // Filtrer les voitures disponibles
         List<Car> availableCars = new java.util.ArrayList<>();
         for (Car car : carList) {
             if (car.isDisponible() || (reservationId != -1)) {
@@ -107,8 +112,7 @@ public class ReservationFormActivity extends AppCompatActivity {
 
         for (Reservation reservation : allReservations) {
             if (reservation.getId() == reservationId) {
-                // Pour les clients, vérifier que la réservation lui appartient
-                if (isClientMode && reservation.getClientId() != sessionManager.getUserId()) {
+                if (isClientMode && reservation.getClientId() != forcedClientId) {
                     Toast.makeText(this, "Accès non autorisé", Toast.LENGTH_SHORT).show();
                     finish();
                     return;
@@ -199,13 +203,11 @@ public class ReservationFormActivity extends AppCompatActivity {
     }
 
     private void saveReservation() {
-        // Vérifier la sélection de la voiture
         if (spCar.getSelectedItem() == null) {
             Toast.makeText(this, "Sélectionnez une voiture", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Pour admin/employé, vérifier la sélection du client
         if (!isClientMode && spClient.getSelectedItem() == null) {
             Toast.makeText(this, "Sélectionnez un client", Toast.LENGTH_SHORT).show();
             return;
@@ -224,10 +226,9 @@ public class ReservationFormActivity extends AppCompatActivity {
             return;
         }
 
-        // Récupérer le client ID (pour client: son propre ID, pour admin/employé: sélectionné)
         int clientId;
         if (isClientMode) {
-            clientId = sessionManager.getUserId();
+            clientId = forcedClientId;
         } else {
             Client selectedClient = (Client) spClient.getSelectedItem();
             clientId = selectedClient.getId();

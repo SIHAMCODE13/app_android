@@ -51,7 +51,16 @@ public class LoginActivity extends AppCompatActivity {
         dbQueries.open();
         if (dbQueries.validateUser(username, password)) {
             User user = dbQueries.getUser(username);
-            sessionManager.createLoginSession(user.getId(), user.getUsername(), user.getRole());
+
+            int clientId = -1;
+            if (user.getRole().equals("Client")) {
+                com.carrental.models.Client client = dbQueries.getClientByUserId(user.getId());
+                if (client != null) {
+                    clientId = client.getId();
+                }
+            }
+
+            sessionManager.createLoginSession(user.getId(), user.getUsername(), user.getRole(), clientId);
             dbQueries.close();
             startActivity(new Intent(LoginActivity.this, DashboardActivity.class));
             finish();

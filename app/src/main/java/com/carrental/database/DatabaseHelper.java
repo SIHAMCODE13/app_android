@@ -8,7 +8,7 @@ import android.content.ContentValues;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "car_rental.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     // Table names
     public static final String TABLE_USER = "Utilisateur";
@@ -36,6 +36,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COL_CLIENT_PRENOM = "prenom";
     public static final String COL_CLIENT_EMAIL = "email";
     public static final String COL_CLIENT_TELEPHONE = "telephone";
+    public static final String COL_CLIENT_USER_ID = "user_id";
 
     // Reservation table columns
     public static final String COL_RES_ID = "id";
@@ -46,7 +47,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COL_RES_PRIX_TOTAL = "prix_total";
     public static final String COL_RES_STATUT = "statut";
 
-    // Create table queries
     private static final String CREATE_USER_TABLE =
             "CREATE TABLE " + TABLE_USER + " (" +
                     COL_USER_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
@@ -69,7 +69,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     COL_CLIENT_NOM + " TEXT NOT NULL, " +
                     COL_CLIENT_PRENOM + " TEXT NOT NULL, " +
                     COL_CLIENT_EMAIL + " TEXT UNIQUE NOT NULL, " +
-                    COL_CLIENT_TELEPHONE + " TEXT NOT NULL)";
+                    COL_CLIENT_TELEPHONE + " TEXT NOT NULL, " +
+                    COL_CLIENT_USER_ID + " INTEGER UNIQUE, " +
+                    "FOREIGN KEY(" + COL_CLIENT_USER_ID + ") REFERENCES " + TABLE_USER + "(" + COL_USER_ID + "))";
 
     private static final String CREATE_RESERVATION_TABLE =
             "CREATE TABLE " + TABLE_RESERVATION + " (" +
@@ -99,7 +101,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COL_USER_USERNAME, "admin");
         values.put(COL_USER_PASSWORD, "admin123");
         values.put(COL_USER_ROLE, "Administrateur");
-        db.insert(TABLE_USER, null, values);
+        long adminId = db.insert(TABLE_USER, null, values);
 
         values = new ContentValues();
         values.put(COL_USER_USERNAME, "employee");
@@ -107,12 +109,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COL_USER_ROLE, "Employé");
         db.insert(TABLE_USER, null, values);
 
-        // Insert sample client
+        // Insert sample client with user account
         values = new ContentValues();
-        values.put(COL_CLIENT_NOM, "Dupont");
-        values.put(COL_CLIENT_PRENOM, "Jean");
-        values.put(COL_CLIENT_EMAIL, "jean.dupont@email.com");
+        values.put(COL_USER_USERNAME, "client1");
+        values.put(COL_USER_PASSWORD, "client123");
+        values.put(COL_USER_ROLE, "Client");
+        long clientUserId = db.insert(TABLE_USER, null, values);
+
+        values = new ContentValues();
+        values.put(COL_CLIENT_NOM, "Martin");
+        values.put(COL_CLIENT_PRENOM, "Sophie");
+        values.put(COL_CLIENT_EMAIL, "sophie.martin@email.com");
         values.put(COL_CLIENT_TELEPHONE, "0612345678");
+        values.put(COL_CLIENT_USER_ID, clientUserId);
         db.insert(TABLE_CLIENT, null, values);
 
         // Insert sample car
@@ -121,6 +130,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COL_CAR_MODELE, "Clio");
         values.put(COL_CAR_ANNEE, 2022);
         values.put(COL_CAR_PRIX_JOUR, 50.0);
+        values.put(COL_CAR_DISPONIBLE, 1);
+        db.insert(TABLE_CAR, null, values);
+
+        values = new ContentValues();
+        values.put(COL_CAR_MARQUE, "Peugeot");
+        values.put(COL_CAR_MODELE, "208");
+        values.put(COL_CAR_ANNEE, 2023);
+        values.put(COL_CAR_PRIX_JOUR, 60.0);
         values.put(COL_CAR_DISPONIBLE, 1);
         db.insert(TABLE_CAR, null, values);
     }

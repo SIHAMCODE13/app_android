@@ -8,6 +8,7 @@ public class SessionManager {
     private static final String KEY_USER_ID = "user_id";
     private static final String KEY_USERNAME = "username";
     private static final String KEY_ROLE = "role";
+    private static final String KEY_CLIENT_ID = "client_id";
     private static final String KEY_IS_LOGGED_IN = "is_logged_in";
 
     private SharedPreferences pref;
@@ -18,11 +19,12 @@ public class SessionManager {
         editor = pref.edit();
     }
 
-    public void createLoginSession(int userId, String username, String role) {
+    public void createLoginSession(int userId, String username, String role, int clientId) {
         editor.putBoolean(KEY_IS_LOGGED_IN, true);
         editor.putInt(KEY_USER_ID, userId);
         editor.putString(KEY_USERNAME, username);
         editor.putString(KEY_ROLE, role);
+        editor.putInt(KEY_CLIENT_ID, clientId);
         editor.apply();
     }
 
@@ -42,6 +44,10 @@ public class SessionManager {
         return pref.getString(KEY_ROLE, null);
     }
 
+    public int getClientId() {
+        return pref.getInt(KEY_CLIENT_ID, -1);
+    }
+
     public boolean isAdmin() {
         return getRole() != null && getRole().equals("Administrateur");
     }
@@ -55,15 +61,15 @@ public class SessionManager {
     }
 
     public boolean canDelete() {
-        return isAdmin(); // Seul l'admin peut supprimer
+        return isAdmin();
     }
 
     public boolean canModify() {
-        return isAdmin() || isEmployee(); // Admin et employé peuvent modifier
+        return isAdmin() || isEmployee();
     }
 
     public boolean canViewAll() {
-        return isAdmin() || isEmployee(); // Admin et employé voient tout
+        return isAdmin() || isEmployee();
     }
 
     public void logout() {

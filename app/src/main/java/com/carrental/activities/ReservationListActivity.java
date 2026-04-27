@@ -2,7 +2,6 @@ package com.carrental.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
@@ -39,7 +38,6 @@ public class ReservationListActivity extends AppCompatActivity {
 
         dbQueries = new DatabaseQueries(this);
 
-        // Tout le monde peut ajouter une réservation
         btnAdd.setOnClickListener(v -> {
             Intent intent = new Intent(ReservationListActivity.this, ReservationFormActivity.class);
             startActivity(intent);
@@ -51,11 +49,8 @@ public class ReservationListActivity extends AppCompatActivity {
     private void loadReservations() {
         dbQueries.open();
 
-        // Si c'est un client, ne voir que ses propres réservations
         if (sessionManager.isClient()) {
-            // Récupérer l'ID du client connecté
-            // Pour simplifier, on utilise l'ID de session
-            int clientId = sessionManager.getUserId();
+            int clientId = sessionManager.getClientId();
             reservationList = dbQueries.getClientReservations(clientId);
         } else {
             reservationList = dbQueries.getAllReservations();
@@ -64,11 +59,15 @@ public class ReservationListActivity extends AppCompatActivity {
         dbQueries.close();
 
         boolean canEdit = sessionManager.canModify();
-        boolean canCancel = true; // Tout le monde peut annuler ses réservations
+        boolean canCancel = true;
 
         adapter = new ReservationAdapter(reservationList, canEdit, canCancel,
                 this::onEditClick, this::onCancelClick);
         recyclerView.setAdapter(adapter);
+
+        if (reservationList.isEmpty()) {
+            Toast.makeText(this, "Aucune réservation trouvée", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void onEditClick(Reservation reservation) {
