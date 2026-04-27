@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.carrental">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_car"
+        android:label="Car Rental"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar">  <!-- CHANGÉ ICI -->
+
+        <activity android:name=".activities.SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">  <!-- CHANGÉ ICI -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".activities.LoginActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
+        <activity android:name=".activities.RegisterActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
+        <activity android:name=".activities.DashboardActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
+        <activity android:name=".activities.CarListActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
+        <activity android:name=".activities.CarFormActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
+        <activity android:name=".activities.ClientListActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
+        <activity android:name=".activities.ClientFormActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
+        <activity android:name=".activities.ReservationListActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
+        <activity android:name=".activities.ReservationFormActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
+        <activity android:name=".activities.PaymentHistoryActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
+
+    </application>
+
+</manifest>
