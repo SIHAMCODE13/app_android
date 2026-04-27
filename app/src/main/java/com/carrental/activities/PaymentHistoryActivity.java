@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.carrental.R;
 import com.carrental.database.DatabaseQueries;
 import com.carrental.models.Reservation;
+import com.carrental.utils.SessionManager;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +23,7 @@ public class PaymentHistoryActivity extends AppCompatActivity {
     private List<PaymentItem> paymentList;
     private Spinner spFilter;
     private Button btnFilter;
+    private SessionManager sessionManager;
 
     static class PaymentItem {
         String clientName;
@@ -44,6 +46,8 @@ public class PaymentHistoryActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_payment_history);
 
+        sessionManager = new SessionManager(this);
+
         recyclerView = findViewById(R.id.recyclerView);
         spFilter = findViewById(R.id.spFilter);
         btnFilter = findViewById(R.id.btnFilter);
@@ -52,25 +56,42 @@ public class PaymentHistoryActivity extends AppCompatActivity {
 
         dbQueries = new DatabaseQueries(this);
 
-        String[] filters = {"Tous", "Payés", "En attente"};
-        ArrayAdapter<String> adapterSpinner = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, filters);
-        adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spFilter.setAdapter(adapterSpinner);
-
-        btnFilter.setOnClickListener(v -> loadPayments());
+        // Pour les clients, cacher le filtre
+        if (sessionManager.isClient()) {
+            spFilter.setVisibility(View.GONE);
+            btnFilter.setVisibility(View.GONE);
+        } else {
+            String[] filters = {"Tous", "Payés", "En attente"};
+            ArrayAdapter<String> adapterSpinner = new ArrayAdapter<>(this,
+                    android.R.layout.simple_spinner_item, filters);
+            adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spFilter.setAdapter(adapterSpinner);
+            btnFilter.setOnClickListener(v -> loadPayments());
+        }
 
         loadPayments();
     }
 
     private void loadPayments() {
         dbQueries.open();
-        List<Reservation> reservations = dbQueries.getAllReservations();
+        List<Reservation> reservations;
+
+        // Si c'est un client, ne voir que ses propres paiements
+        if (sessionManager.isClient()) {
+            int clientId = sessionManager.getUserId();
+            reservations = dbQueries.getClientReservations(clientId);
+        } else {
+            reservations = dbQueries.getAllReservations();
+        }
+
         dbQueries.close();
 
         paymentList = new ArrayList<>();
 
-        String filter = spFilter.getSelectedItem().toString();
+        String filter = "Tous";
+        if (!sessionManager.isClient()) {
+            filter = spFilter.getSelectedItem().toString();
+        }
 
         for (Reservation reservation : reservations) {
             String paymentStatus = reservation.getStatut().equals("ACTIVE") ? "En attente" : "Payé";
@@ -83,8 +104,10 @@ public class PaymentHistoryActivity extends AppCompatActivity {
                     paymentStatus = "Payé";
                 }
 
+                String clientDisplay = sessionManager.isClient() ? "Vous" : reservation.getClientName();
+
                 paymentList.add(new PaymentItem(
-                        reservation.getClientName(),
+                        clientDisplay,
                         reservation.getCarName(),
                         reservation.getDateDebut(),
                         reservation.getPrixTotal(),

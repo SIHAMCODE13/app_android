@@ -2,6 +2,7 @@ package com.carrental.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
@@ -12,6 +13,7 @@ import com.carrental.R;
 import com.carrental.adapters.CarAdapter;
 import com.carrental.database.DatabaseQueries;
 import com.carrental.models.Car;
+import com.carrental.utils.SessionManager;
 import java.util.List;
 
 public class CarListActivity extends AppCompatActivity {
@@ -21,11 +23,14 @@ public class CarListActivity extends AppCompatActivity {
     private DatabaseQueries dbQueries;
     private List<Car> carList;
     private Button btnAdd;
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_car_list);
+
+        sessionManager = new SessionManager(this);
 
         recyclerView = findViewById(R.id.recyclerView);
         btnAdd = findViewById(R.id.btnAdd);
@@ -34,10 +39,15 @@ public class CarListActivity extends AppCompatActivity {
 
         dbQueries = new DatabaseQueries(this);
 
-        btnAdd.setOnClickListener(v -> {
-            Intent intent = new Intent(CarListActivity.this, CarFormActivity.class);
-            startActivity(intent);
-        });
+        // Les clients ne peuvent pas ajouter de voitures
+        if (sessionManager.isClient()) {
+            btnAdd.setVisibility(View.GONE);
+        } else {
+            btnAdd.setOnClickListener(v -> {
+                Intent intent = new Intent(CarListActivity.this, CarFormActivity.class);
+                startActivity(intent);
+            });
+        }
 
         loadCars();
     }
@@ -47,36 +57,46 @@ public class CarListActivity extends AppCompatActivity {
         carList = dbQueries.getAllCars();
         dbQueries.close();
 
-        adapter = new CarAdapter(carList, this::onEditClick, this::onDeleteClick);
+        // Pour les clients, masquer les boutons d'édition et suppression
+        boolean canEdit = sessionManager.canModify();
+        boolean canDelete = sessionManager.canDelete();
+
+        adapter = new CarAdapter(carList, canEdit, canDelete, this::onEditClick, this::onDeleteClick);
         recyclerView.setAdapter(adapter);
     }
 
     private void onEditClick(Car car) {
-        Intent intent = new Intent(CarListActivity.this, CarFormActivity.class);
-        intent.putExtra("car_id", car.getId());
-        startActivity(intent);
+        if (sessionManager.canModify()) {
+            Intent intent = new Intent(CarListActivity.this, CarFormActivity.class);
+            intent.putExtra("car_id", car.getId());
+            startActivity(intent);
+        }
     }
 
     private void onDeleteClick(Car car) {
-        new AlertDialog.Builder(this)
-                .setTitle("Supprimer la voiture")
-                .setMessage("Êtes-vous sûr de vouloir supprimer " + car.getMarque() + " " + car.getModele() + "?")
-                .setPositiveButton("Oui", (dialog, which) -> {
-                    dbQueries.open();
-                    int result = dbQueries.deleteCar(car.getId());
-                    dbQueries.close();
+        if (sessionManager.canDelete()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Supprimer la voiture")
+                    .setMessage("Êtes-vous sûr de vouloir supprimer " + car.getMarque() + " " + car.getModele() + "?")
+                    .setPositiveButton("Oui", (dialog, which) -> {
+                        dbQueries.open();
+                        int result = dbQueries.deleteCar(car.getId());
+                        dbQueries.close();
 
-                    if (result == -1) {
-                        Toast.makeText(this, "Impossible de supprimer: voiture réservée", Toast.LENGTH_LONG).show();
-                    } else if (result > 0) {
-                        Toast.makeText(this, "Voiture supprimée", Toast.LENGTH_SHORT).show();
-                        loadCars();
-                    } else {
-                        Toast.makeText(this, "Erreur lors de la suppression", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton("Non", null)
-                .show();
+                        if (result == -1) {
+                            Toast.makeText(this, "Impossible de supprimer: voiture réservée", Toast.LENGTH_LONG).show();
+                        } else if (result > 0) {
+                            Toast.makeText(this, "Voiture supprimée", Toast.LENGTH_SHORT).show();
+                            loadCars();
+                        } else {
+                            Toast.makeText(this, "Erreur lors de la suppression", Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .setNegativeButton("Non", null)
+                    .show();
+        } else {
+            Toast.makeText(this, "Vous n'avez pas les droits pour supprimer", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override

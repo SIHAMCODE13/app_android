@@ -13,6 +13,8 @@ import java.util.List;
 public class CarAdapter extends RecyclerView.Adapter<CarAdapter.ViewHolder> {
 
     private List<Car> carList;
+    private boolean canEdit;
+    private boolean canDelete;
     private OnItemClickListener editListener;
     private OnItemClickListener deleteListener;
 
@@ -20,8 +22,11 @@ public class CarAdapter extends RecyclerView.Adapter<CarAdapter.ViewHolder> {
         void onItemClick(Car car);
     }
 
-    public CarAdapter(List<Car> carList, OnItemClickListener editListener, OnItemClickListener deleteListener) {
+    public CarAdapter(List<Car> carList, boolean canEdit, boolean canDelete,
+                      OnItemClickListener editListener, OnItemClickListener deleteListener) {
         this.carList = carList;
+        this.canEdit = canEdit;
+        this.canDelete = canDelete;
         this.editListener = editListener;
         this.deleteListener = deleteListener;
     }
@@ -42,8 +47,20 @@ public class CarAdapter extends RecyclerView.Adapter<CarAdapter.ViewHolder> {
         holder.tvStatus.setTextColor(holder.itemView.getContext().getColor(
                 car.isDisponible() ? android.R.color.holo_green_dark : android.R.color.holo_red_dark));
 
-        holder.btnEdit.setOnClickListener(v -> editListener.onItemClick(car));
-        holder.btnDelete.setOnClickListener(v -> deleteListener.onItemClick(car));
+        // Gérer l'affichage des boutons selon les permissions
+        if (canEdit) {
+            holder.btnEdit.setVisibility(View.VISIBLE);
+            holder.btnEdit.setOnClickListener(v -> editListener.onItemClick(car));
+        } else {
+            holder.btnEdit.setVisibility(View.GONE);
+        }
+
+        if (canDelete) {
+            holder.btnDelete.setVisibility(View.VISIBLE);
+            holder.btnDelete.setOnClickListener(v -> deleteListener.onItemClick(car));
+        } else {
+            holder.btnDelete.setVisibility(View.GONE);
+        }
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.carrental.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,7 +32,13 @@ public class DashboardActivity extends AppCompatActivity {
         cardReservations = findViewById(R.id.cardReservations);
         cardPayments = findViewById(R.id.cardPayments);
 
-        tvWelcome.setText("Bienvenue, " + sessionManager.getUsername() + " (" + sessionManager.getRole() + ")");
+        String role = sessionManager.getRole();
+        tvWelcome.setText("Bienvenue, " + sessionManager.getUsername() + " (" + role + ")");
+
+        // Cacher la carte Clients pour les clients
+        if (sessionManager.isClient()) {
+            cardClients.setVisibility(View.GONE);
+        }
 
         btnLogout.setOnClickListener(v -> {
             sessionManager.logout();

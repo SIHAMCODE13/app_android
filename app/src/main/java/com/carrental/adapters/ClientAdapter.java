@@ -13,6 +13,8 @@ import java.util.List;
 public class ClientAdapter extends RecyclerView.Adapter<ClientAdapter.ViewHolder> {
 
     private List<Client> clientList;
+    private boolean canEdit;
+    private boolean canDelete;
     private OnItemClickListener editListener;
     private OnItemClickListener deleteListener;
 
@@ -20,8 +22,11 @@ public class ClientAdapter extends RecyclerView.Adapter<ClientAdapter.ViewHolder
         void onItemClick(Client client);
     }
 
-    public ClientAdapter(List<Client> clientList, OnItemClickListener editListener, OnItemClickListener deleteListener) {
+    public ClientAdapter(List<Client> clientList, boolean canEdit, boolean canDelete,
+                         OnItemClickListener editListener, OnItemClickListener deleteListener) {
         this.clientList = clientList;
+        this.canEdit = canEdit;
+        this.canDelete = canDelete;
         this.editListener = editListener;
         this.deleteListener = deleteListener;
     }
@@ -40,8 +45,19 @@ public class ClientAdapter extends RecyclerView.Adapter<ClientAdapter.ViewHolder
         holder.tvEmail.setText(client.getEmail());
         holder.tvPhone.setText(client.getTelephone());
 
-        holder.btnEdit.setOnClickListener(v -> editListener.onItemClick(client));
-        holder.btnDelete.setOnClickListener(v -> deleteListener.onItemClick(client));
+        if (canEdit) {
+            holder.btnEdit.setVisibility(View.VISIBLE);
+            holder.btnEdit.setOnClickListener(v -> editListener.onItemClick(client));
+        } else {
+            holder.btnEdit.setVisibility(View.GONE);
+        }
+
+        if (canDelete) {
+            holder.btnDelete.setVisibility(View.VISIBLE);
+            holder.btnDelete.setOnClickListener(v -> deleteListener.onItemClick(client));
+        } else {
+            holder.btnDelete.setVisibility(View.GONE);
+        }
     }
 
     @Override

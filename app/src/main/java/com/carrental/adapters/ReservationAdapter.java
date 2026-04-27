@@ -13,6 +13,8 @@ import java.util.List;
 public class ReservationAdapter extends RecyclerView.Adapter<ReservationAdapter.ViewHolder> {
 
     private List<Reservation> reservationList;
+    private boolean canEdit;
+    private boolean canCancel;
     private OnItemClickListener editListener;
     private OnItemClickListener cancelListener;
 
@@ -20,10 +22,11 @@ public class ReservationAdapter extends RecyclerView.Adapter<ReservationAdapter.
         void onItemClick(Reservation reservation);
     }
 
-    public ReservationAdapter(List<Reservation> reservationList,
-                              OnItemClickListener editListener,
-                              OnItemClickListener cancelListener) {
+    public ReservationAdapter(List<Reservation> reservationList, boolean canEdit, boolean canCancel,
+                              OnItemClickListener editListener, OnItemClickListener cancelListener) {
         this.reservationList = reservationList;
+        this.canEdit = canEdit;
+        this.canCancel = canCancel;
         this.editListener = editListener;
         this.cancelListener = cancelListener;
     }
@@ -51,9 +54,14 @@ public class ReservationAdapter extends RecyclerView.Adapter<ReservationAdapter.
         }
         holder.tvStatus.setTextColor(statusColor);
 
-        holder.btnEdit.setOnClickListener(v -> editListener.onItemClick(reservation));
+        if (canEdit) {
+            holder.btnEdit.setVisibility(View.VISIBLE);
+            holder.btnEdit.setOnClickListener(v -> editListener.onItemClick(reservation));
+        } else {
+            holder.btnEdit.setVisibility(View.GONE);
+        }
 
-        if (reservation.getStatut().equals("ACTIVE")) {
+        if (canCancel && reservation.getStatut().equals("ACTIVE")) {
             holder.btnCancel.setVisibility(View.VISIBLE);
             holder.btnCancel.setOnClickListener(v -> cancelListener.onItemClick(reservation));
         } else {

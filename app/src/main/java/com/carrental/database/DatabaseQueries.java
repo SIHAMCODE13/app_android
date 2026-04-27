@@ -8,6 +8,8 @@ import com.carrental.models.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("all")
+
 public class DatabaseQueries {
     private DatabaseHelper dbHelper;
     private SQLiteDatabase database;
@@ -303,6 +305,39 @@ public class DatabaseQueries {
                 " JOIN " + DatabaseHelper.TABLE_CAR + " v ON r." + DatabaseHelper.COL_RES_CAR_ID + " = v." + DatabaseHelper.COL_CAR_ID;
 
         Cursor cursor = database.rawQuery(query, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                Reservation reservation = new Reservation(
+                        cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COL_RES_ID)),
+                        cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COL_RES_CLIENT_ID)),
+                        cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COL_RES_CAR_ID)),
+                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_RES_DATE_DEBUT)),
+                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_RES_DATE_FIN)),
+                        cursor.getDouble(cursor.getColumnIndex(DatabaseHelper.COL_RES_PRIX_TOTAL)),
+                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_RES_STATUT))
+                );
+                reservation.setClientName(cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_PRENOM)) + " " +
+                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_NOM)));
+                reservation.setCarName(cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CAR_MARQUE)) + " " +
+                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CAR_MODELE)));
+                reservations.add(reservation);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return reservations;
+    }
+    // Ajoutez cette méthode dans DatabaseQueries.java
+    public List<Reservation> getClientReservations(int clientId) {
+        List<Reservation> reservations = new ArrayList<>();
+        String query = "SELECT r.*, c." + DatabaseHelper.COL_CLIENT_NOM + ", c." + DatabaseHelper.COL_CLIENT_PRENOM +
+                ", v." + DatabaseHelper.COL_CAR_MARQUE + ", v." + DatabaseHelper.COL_CAR_MODELE +
+                " FROM " + DatabaseHelper.TABLE_RESERVATION + " r" +
+                " JOIN " + DatabaseHelper.TABLE_CLIENT + " c ON r." + DatabaseHelper.COL_RES_CLIENT_ID + " = c." + DatabaseHelper.COL_CLIENT_ID +
+                " JOIN " + DatabaseHelper.TABLE_CAR + " v ON r." + DatabaseHelper.COL_RES_CAR_ID + " = v." + DatabaseHelper.COL_CAR_ID +
+                " WHERE r." + DatabaseHelper.COL_RES_CLIENT_ID + " = ?";
+
+        Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(clientId)});
 
         if (cursor.moveToFirst()) {
             do {

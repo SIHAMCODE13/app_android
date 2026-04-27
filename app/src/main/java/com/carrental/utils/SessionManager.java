@@ -42,6 +42,30 @@ public class SessionManager {
         return pref.getString(KEY_ROLE, null);
     }
 
+    public boolean isAdmin() {
+        return getRole() != null && getRole().equals("Administrateur");
+    }
+
+    public boolean isEmployee() {
+        return getRole() != null && getRole().equals("Employé");
+    }
+
+    public boolean isClient() {
+        return getRole() != null && getRole().equals("Client");
+    }
+
+    public boolean canDelete() {
+        return isAdmin(); // Seul l'admin peut supprimer
+    }
+
+    public boolean canModify() {
+        return isAdmin() || isEmployee(); // Admin et employé peuvent modifier
+    }
+
+    public boolean canViewAll() {
+        return isAdmin() || isEmployee(); // Admin et employé voient tout
+    }
+
     public void logout() {
         editor.clear();
         editor.apply();
