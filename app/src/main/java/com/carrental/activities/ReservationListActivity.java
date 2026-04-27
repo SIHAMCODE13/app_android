@@ -12,6 +12,7 @@ import com.carrental.R;
 import com.carrental.adapters.ReservationAdapter;
 import com.carrental.database.DatabaseQueries;
 import com.carrental.models.Reservation;
+import com.carrental.utils.NotificationHelper;
 import com.carrental.utils.SessionManager;
 import java.util.List;
 
@@ -23,6 +24,7 @@ public class ReservationListActivity extends AppCompatActivity {
     private List<Reservation> reservationList;
     private Button btnAdd;
     private SessionManager sessionManager;
+    private NotificationHelper notificationHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +32,7 @@ public class ReservationListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_reservation_list);
 
         sessionManager = new SessionManager(this);
+        notificationHelper = new NotificationHelper(this);
 
         recyclerView = findViewById(R.id.recyclerView);
         btnAdd = findViewById(R.id.btnAdd);
@@ -47,26 +50,36 @@ public class ReservationListActivity extends AppCompatActivity {
     }
 
     private void loadReservations() {
-        dbQueries.open();
+        try {
+            dbQueries.open();
 
-        if (sessionManager.isClient()) {
-            int clientId = sessionManager.getClientId();
-            reservationList = dbQueries.getClientReservations(clientId);
-        } else {
-            reservationList = dbQueries.getAllReservations();
-        }
+            if (sessionManager.isClient()) {
+                int clientId = sessionManager.getClientId();
+                if (clientId != -1) {
+                    reservationList = dbQueries.getClientReservations(clientId);
+                } else {
+                    reservationList = new java.util.ArrayList<>();
+                    Toast.makeText(this, "Aucune réservation trouvée pour ce client", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                reservationList = dbQueries.getAllReservations();
+            }
 
-        dbQueries.close();
+            dbQueries.close();
 
-        boolean canEdit = sessionManager.canModify();
-        boolean canCancel = true;
+            boolean canEdit = sessionManager.canModify();
+            boolean canCancel = true;
 
-        adapter = new ReservationAdapter(reservationList, canEdit, canCancel,
-                this::onEditClick, this::onCancelClick);
-        recyclerView.setAdapter(adapter);
+            adapter = new ReservationAdapter(reservationList, canEdit, canCancel,
+                    this::onEditClick, this::onCancelClick);
+            recyclerView.setAdapter(adapter);
 
-        if (reservationList.isEmpty()) {
-            Toast.makeText(this, "Aucune réservation trouvée", Toast.LENGTH_SHORT).show();
+            if (reservationList == null || reservationList.isEmpty()) {
+                Toast.makeText(this, "Aucune réservation trouvée", Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Erreur chargement: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -90,6 +103,15 @@ public class ReservationListActivity extends AppCompatActivity {
                     dbQueries.close();
 
                     if (result > 0) {
+                        // Envoyer notification d'annulation
+                        if (sessionManager.isClient()) {
+                            notificationHelper.showClientCancellationNotification(reservation.getCarName());
+                        } else {
+                            notificationHelper.showReservationCancelledNotification(
+                                    reservation.getClientName(),
+                                    reservation.getCarName()
+                            );
+                        }
                         Toast.makeText(this, "Réservation annulée", Toast.LENGTH_SHORT).show();
                         loadReservations();
                     } else {

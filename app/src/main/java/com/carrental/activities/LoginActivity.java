@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.carrental.R;
 import com.carrental.database.DatabaseQueries;
 import com.carrental.models.User;
+import com.carrental.utils.NotificationHelper;
 import com.carrental.utils.SessionManager;
 
 public class LoginActivity extends AppCompatActivity {
@@ -17,6 +18,7 @@ public class LoginActivity extends AppCompatActivity {
     private TextView tvError;
     private DatabaseQueries dbQueries;
     private SessionManager sessionManager;
+    private NotificationHelper notificationHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,6 +27,7 @@ public class LoginActivity extends AppCompatActivity {
 
         dbQueries = new DatabaseQueries(this);
         sessionManager = new SessionManager(this);
+        notificationHelper = new NotificationHelper(this);
 
         etUsername = findViewById(R.id.etUsername);
         etPassword = findViewById(R.id.etPassword);
@@ -58,7 +61,6 @@ public class LoginActivity extends AppCompatActivity {
                 if (client != null) {
                     clientId = client.getId();
                 } else {
-                    // Si le client n'existe pas dans la table Client, le créer
                     Toast.makeText(this, "Erreur: Profil client incomplet", Toast.LENGTH_SHORT).show();
                     dbQueries.close();
                     return;
@@ -67,6 +69,10 @@ public class LoginActivity extends AppCompatActivity {
 
             sessionManager.createLoginSession(user.getId(), user.getUsername(), user.getRole(), clientId);
             dbQueries.close();
+
+            // Envoyer notification de bienvenue
+            notificationHelper.showWelcomeNotification(user.getUsername(), user.getRole());
+
             startActivity(new Intent(LoginActivity.this, DashboardActivity.class));
             finish();
         } else {

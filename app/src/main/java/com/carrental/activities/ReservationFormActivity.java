@@ -10,6 +10,7 @@ import com.carrental.database.DatabaseQueries;
 import com.carrental.models.Car;
 import com.carrental.models.Client;
 import com.carrental.models.Reservation;
+import com.carrental.utils.NotificationHelper;
 import com.carrental.utils.SessionManager;
 import com.carrental.utils.ValidationUtils;
 import java.text.SimpleDateFormat;
@@ -25,6 +26,7 @@ public class ReservationFormActivity extends AppCompatActivity {
     private Button btnSave, btnCalculer;
     private DatabaseQueries dbQueries;
     private SessionManager sessionManager;
+    private NotificationHelper notificationHelper;
     private int reservationId = -1;
     private List<Client> clientList;
     private List<Car> carList;
@@ -38,6 +40,7 @@ public class ReservationFormActivity extends AppCompatActivity {
 
         try {
             sessionManager = new SessionManager(this);
+            notificationHelper = new NotificationHelper(this);
             isClientMode = sessionManager.isClient();
 
             if (isClientMode) {
@@ -217,7 +220,6 @@ public class ReservationFormActivity extends AppCompatActivity {
             }
 
             double total = days * selectedCar.getPrixJour();
-            // Formatage avec point pour éviter les problèmes de virgule
             tvPrixTotal.setText(String.format(Locale.US, "%.2f DT", total));
 
         } catch (Exception e) {
@@ -251,21 +253,27 @@ public class ReservationFormActivity extends AppCompatActivity {
             }
 
             int clientId;
+            String clientName = "";
             if (isClientMode) {
                 clientId = forcedClientId;
                 if (clientId == -1) {
                     Toast.makeText(this, "Erreur: Client non trouvé", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                // Récupérer le nom du client
+                Client currentClient = dbQueries.getClient(clientId);
+                if (currentClient != null) {
+                    clientName = currentClient.getPrenom() + " " + currentClient.getNom();
+                }
             } else {
                 Client selectedClient = (Client) spClient.getSelectedItem();
                 clientId = selectedClient.getId();
+                clientName = selectedClient.getPrenom() + " " + selectedClient.getNom();
             }
 
             Car selectedCar = (Car) spCar.getSelectedItem();
 
             String prixTotalStr = tvPrixTotal.getText().toString().replace(" DT", "");
-            // CORRECTION: Remplacer la virgule par un point pour Double.parseDouble
             prixTotalStr = prixTotalStr.replace(",", ".");
             double prixTotal = Double.parseDouble(prixTotalStr);
 
@@ -281,6 +289,21 @@ public class ReservationFormActivity extends AppCompatActivity {
             if (reservationId == -1) {
                 result = dbQueries.addReservation(reservation);
                 if (result != -1) {
+                    // Envoyer les notifications
+                    if (isClientMode) {
+                        // Notification pour le client
+                        notificationHelper.showClientReservationNotification(
+                                selectedCar.getMarque() + " " + selectedCar.getModele(),
+                                dateDebut, dateFin
+                        );
+                    } else {
+                        // Notification pour l'admin/employé
+                        notificationHelper.showReservationCreatedNotification(
+                                clientName,
+                                selectedCar.getMarque() + " " + selectedCar.getModele(),
+                                dateDebut, dateFin
+                        );
+                    }
                     Toast.makeText(this, "Réservation créée avec succès", Toast.LENGTH_SHORT).show();
                     finish();
                 } else {

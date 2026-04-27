@@ -2,41 +2,35 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.carrental">
 
+    <!-- Ajouter cette permission pour les notifications -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_car"
         android:label="Car Rental"
-        android:theme="@style/Theme.AppCompat.Light.NoActionBar">  <!-- CHANGÉ ICI -->
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
         <activity android:name=".activities.SplashActivity"
             android:exported="true"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar">  <!-- CHANGÉ ICI -->
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <activity android:name=".activities.LoginActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
-        <activity android:name=".activities.RegisterActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
-        <activity android:name=".activities.DashboardActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
-        <activity android:name=".activities.CarListActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
-        <activity android:name=".activities.CarFormActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
-        <activity android:name=".activities.ClientListActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
-        <activity android:name=".activities.ClientFormActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
-        <activity android:name=".activities.ReservationListActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
-        <activity android:name=".activities.ReservationFormActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
-        <activity android:name=".activities.PaymentHistoryActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>  <!-- CHANGÉ ICI -->
+        <activity android:name=".activities.LoginActivity" />
+        <activity android:name=".activities.RegisterActivity" />
+        <activity android:name=".activities.DashboardActivity" />
+        <activity android:name=".activities.CarListActivity" />
+        <activity android:name=".activities.CarFormActivity" />
+        <activity android:name=".activities.ClientListActivity" />
+        <activity android:name=".activities.ClientFormActivity" />
+        <activity android:name=".activities.ReservationListActivity" />
+        <activity android:name=".activities.ReservationFormActivity" />
+        <activity android:name=".activities.PaymentHistoryActivity" />
 
     </application>
 

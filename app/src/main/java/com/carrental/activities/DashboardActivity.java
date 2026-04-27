@@ -1,6 +1,8 @@
 package com.carrental.activities;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -22,6 +24,7 @@ public class DashboardActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
+        requestNotificationPermission(); // Ajouter cette lignelink
 
         sessionManager = new SessionManager(this);
 
@@ -58,5 +61,13 @@ public class DashboardActivity extends AppCompatActivity {
 
         cardPayments.setOnClickListener(v ->
                 startActivity(new Intent(DashboardActivity.this, PaymentHistoryActivity.class)));
+    }
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 100);
+            }
+        }
     }
 }
