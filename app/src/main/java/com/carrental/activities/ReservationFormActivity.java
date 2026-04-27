@@ -2,6 +2,7 @@ package com.carrental.activities;
 
 import android.app.DatePickerDialog;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 import com.carrental.R;
@@ -9,6 +10,7 @@ import com.carrental.database.DatabaseQueries;
 import com.carrental.models.Car;
 import com.carrental.models.Client;
 import com.carrental.models.Reservation;
+import com.carrental.utils.SessionManager;
 import com.carrental.utils.ValidationUtils;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -22,14 +24,19 @@ public class ReservationFormActivity extends AppCompatActivity {
     private TextView tvPrixTotal;
     private Button btnSave, btnCalculer;
     private DatabaseQueries dbQueries;
+    private SessionManager sessionManager;
     private int reservationId = -1;
     private List<Client> clientList;
     private List<Car> carList;
+    private boolean isClientMode = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reservation_form);
+
+        sessionManager = new SessionManager(this);
+        isClientMode = sessionManager.isClient();
 
         spClient = findViewById(R.id.spClient);
         spCar = findViewById(R.id.spCar);
@@ -40,6 +47,12 @@ public class ReservationFormActivity extends AppCompatActivity {
         btnCalculer = findViewById(R.id.btnCalculer);
 
         dbQueries = new DatabaseQueries(this);
+
+        // Si c'est un client, cacher le spinner client et utiliser son propre ID
+        if (isClientMode) {
+            spClient.setVisibility(View.GONE);
+            findViewById(R.id.tvClientLabel).setVisibility(View.GONE);
+        }
 
         etDateDebut.setOnClickListener(v -> showDatePickerDialog(etDateDebut));
         etDateFin.setOnClickListener(v -> showDatePickerDialog(etDateFin));
@@ -65,11 +78,15 @@ public class ReservationFormActivity extends AppCompatActivity {
         carList = dbQueries.getAllCars();
         dbQueries.close();
 
-        ArrayAdapter<Client> clientAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, clientList);
-        clientAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spClient.setAdapter(clientAdapter);
+        // Spinner des clients (visible seulement pour admin/employé)
+        if (!isClientMode) {
+            ArrayAdapter<Client> clientAdapter = new ArrayAdapter<>(this,
+                    android.R.layout.simple_spinner_item, clientList);
+            clientAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spClient.setAdapter(clientAdapter);
+        }
 
+        // Filtrer les voitures disponibles
         List<Car> availableCars = new java.util.ArrayList<>();
         for (Car car : carList) {
             if (car.isDisponible() || (reservationId != -1)) {
@@ -90,10 +107,19 @@ public class ReservationFormActivity extends AppCompatActivity {
 
         for (Reservation reservation : allReservations) {
             if (reservation.getId() == reservationId) {
-                for (int i = 0; i < clientList.size(); i++) {
-                    if (clientList.get(i).getId() == reservation.getClientId()) {
-                        spClient.setSelection(i);
-                        break;
+                // Pour les clients, vérifier que la réservation lui appartient
+                if (isClientMode && reservation.getClientId() != sessionManager.getUserId()) {
+                    Toast.makeText(this, "Accès non autorisé", Toast.LENGTH_SHORT).show();
+                    finish();
+                    return;
+                }
+
+                if (!isClientMode) {
+                    for (int i = 0; i < clientList.size(); i++) {
+                        if (clientList.get(i).getId() == reservation.getClientId()) {
+                            spClient.setSelection(i);
+                            break;
+                        }
                     }
                 }
 
@@ -173,8 +199,15 @@ public class ReservationFormActivity extends AppCompatActivity {
     }
 
     private void saveReservation() {
-        if (spClient.getSelectedItem() == null || spCar.getSelectedItem() == null) {
-            Toast.makeText(this, "Sélectionnez un client et une voiture", Toast.LENGTH_SHORT).show();
+        // Vérifier la sélection de la voiture
+        if (spCar.getSelectedItem() == null) {
+            Toast.makeText(this, "Sélectionnez une voiture", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Pour admin/employé, vérifier la sélection du client
+        if (!isClientMode && spClient.getSelectedItem() == null) {
+            Toast.makeText(this, "Sélectionnez un client", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -191,13 +224,21 @@ public class ReservationFormActivity extends AppCompatActivity {
             return;
         }
 
-        Client selectedClient = (Client) spClient.getSelectedItem();
+        // Récupérer le client ID (pour client: son propre ID, pour admin/employé: sélectionné)
+        int clientId;
+        if (isClientMode) {
+            clientId = sessionManager.getUserId();
+        } else {
+            Client selectedClient = (Client) spClient.getSelectedItem();
+            clientId = selectedClient.getId();
+        }
+
         Car selectedCar = (Car) spCar.getSelectedItem();
 
         String prixTotalStr = tvPrixTotal.getText().toString().replace(" DT", "");
         double prixTotal = Double.parseDouble(prixTotalStr);
 
-        Reservation reservation = new Reservation(reservationId, selectedClient.getId(),
+        Reservation reservation = new Reservation(reservationId, clientId,
                 selectedCar.getId(), dateDebut, dateFin, prixTotal, "ACTIVE");
 
         dbQueries.open();
@@ -205,7 +246,7 @@ public class ReservationFormActivity extends AppCompatActivity {
         if (reservationId == -1) {
             result = dbQueries.addReservation(reservation);
             if (result != -1) {
-                Toast.makeText(this, "Réservation créée", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Réservation créée avec succès", Toast.LENGTH_SHORT).show();
                 finish();
             } else {
                 Toast.makeText(this, "Erreur lors de la création", Toast.LENGTH_SHORT).show();

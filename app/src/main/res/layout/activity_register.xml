@@ -2,8 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:background="@color/colorPrimary">
+    android:padding="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,10 +15,9 @@
             android:layout_height="wrap_content"
             android:text="Inscription"
             android:textSize="24sp"
-            android:textColor="@android:color/white"
+            android:textColor="@color/colorPrimary"
             android:textStyle="bold"
-            android:layout_marginBottom="30dp"
-            android:layout_marginTop="30dp" />
+            android:layout_marginBottom="30dp" />
 
         <EditText
             android:id="@+id/etUsername"
@@ -27,8 +25,6 @@
             android:layout_height="wrap_content"
             android:hint="Nom d'utilisateur"
             android:inputType="text"
-            android:textColorHint="@android:color/white"
-            android:textColor="@android:color/white"
             android:layout_marginBottom="16dp" />
 
         <EditText
@@ -37,8 +33,6 @@
             android:layout_height="wrap_content"
             android:hint="Mot de passe"
             android:inputType="textPassword"
-            android:textColorHint="@android:color/white"
-            android:textColor="@android:color/white"
             android:layout_marginBottom="16dp" />
 
         <EditText
@@ -47,9 +41,14 @@
             android:layout_height="wrap_content"
             android:hint="Confirmer mot de passe"
             android:inputType="textPassword"
-            android:textColorHint="@android:color/white"
-            android:textColor="@android:color/white"
             android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Rôle"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
 
         <Spinner
             android:id="@+id/spRole"
@@ -57,13 +56,21 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp" />
 
-        <!-- Champs client (cachés par défaut) -->
         <LinearLayout
-            android:id="@+id/clientFields"
+            android:id="@+id/clientFieldsLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Informations client"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp" />
 
             <EditText
                 android:id="@+id/etNom"
@@ -71,8 +78,6 @@
                 android:layout_height="wrap_content"
                 android:hint="Nom"
                 android:inputType="text"
-                android:textColorHint="@android:color/white"
-                android:textColor="@android:color/white"
                 android:layout_marginBottom="16dp" />
 
             <EditText
@@ -81,8 +86,6 @@
                 android:layout_height="wrap_content"
                 android:hint="Prénom"
                 android:inputType="text"
-                android:textColorHint="@android:color/white"
-                android:textColor="@android:color/white"
                 android:layout_marginBottom="16dp" />
 
             <EditText
@@ -91,8 +94,6 @@
                 android:layout_height="wrap_content"
                 android:hint="Email"
                 android:inputType="textEmailAddress"
-                android:textColorHint="@android:color/white"
-                android:textColor="@android:color/white"
                 android:layout_marginBottom="16dp" />
 
             <EditText
@@ -101,16 +102,14 @@
                 android:layout_height="wrap_content"
                 android:hint="Téléphone"
                 android:inputType="phone"
-                android:textColorHint="@android:color/white"
-                android:textColor="@android:color/white"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginBottom="24dp" />
         </LinearLayout>
 
         <TextView
             android:id="@+id/tvError"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/holo_red_light"
+            android:textColor="@android:color/holo_red_dark"
             android:visibility="gone"
             android:gravity="center"
             android:layout_marginBottom="16dp" />
@@ -120,7 +119,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="S'inscrire"
-            android:layout_marginBottom="16dp" />
+            android:backgroundTint="@color/colorPrimary"
+            android:textColor="@android:color/white" />
 
     </LinearLayout>
 

@@ -10,11 +10,13 @@ import com.carrental.database.DatabaseQueries;
 public class RegisterActivity extends AppCompatActivity {
 
     private EditText etUsername, etPassword, etConfirmPassword;
+    private EditText etNom, etPrenom, etEmail, etTelephone;
     private Spinner spRole;
     private Button btnRegister;
     private TextView tvError;
     private DatabaseQueries dbQueries;
     private String[] roles = {"Client", "Employé"};
+    private LinearLayout clientFieldsLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,9 +32,33 @@ public class RegisterActivity extends AppCompatActivity {
         btnRegister = findViewById(R.id.btnRegister);
         tvError = findViewById(R.id.tvError);
 
+        // Champs spécifiques au client
+        etNom = findViewById(R.id.etNom);
+        etPrenom = findViewById(R.id.etPrenom);
+        etEmail = findViewById(R.id.etEmail);
+        etTelephone = findViewById(R.id.etTelephone);
+        clientFieldsLayout = findViewById(R.id.clientFieldsLayout);
+
+        // Masquer les champs client par défaut (visible seulement pour le rôle Client)
+        clientFieldsLayout.setVisibility(View.GONE);
+
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, roles);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spRole.setAdapter(adapter);
+
+        spRole.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (roles[position].equals("Client")) {
+                    clientFieldsLayout.setVisibility(View.VISIBLE);
+                } else {
+                    clientFieldsLayout.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
 
         btnRegister.setOnClickListener(v -> register());
     }
@@ -61,9 +87,43 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
+        // Pour les clients, vérifier les champs supplémentaires
+        if (role.equals("Client")) {
+            String nom = etNom.getText().toString().trim();
+            String prenom = etPrenom.getText().toString().trim();
+            String email = etEmail.getText().toString().trim();
+            String telephone = etTelephone.getText().toString().trim();
+
+            if (nom.isEmpty() || prenom.isEmpty() || email.isEmpty() || telephone.isEmpty()) {
+                tvError.setText("Veuillez remplir tous les champs client");
+                tvError.setVisibility(View.VISIBLE);
+                return;
+            }
+        }
+
         dbQueries.open();
+
+        // Créer d'abord l'utilisateur
         if (dbQueries.registerUser(username, password, role)) {
+            // Si c'est un client, créer aussi l'entrée dans la table Client
+            if (role.equals("Client")) {
+                String nom = etNom.getText().toString().trim();
+                String prenom = etPrenom.getText().toString().trim();
+                String email = etEmail.getText().toString().trim();
+                String telephone = etTelephone.getText().toString().trim();
+
+                // Récupérer l'ID de l'utilisateur créé
+                int userId = dbQueries.getUser(username).getId();
+
+                // Créer le client avec le même ID
+                com.carrental.models.Client client = new com.carrental.models.Client(
+                        userId, nom, prenom, email, telephone
+                );
+                dbQueries.addClient(client);
+            }
+
             Toast.makeText(this, "Inscription réussie", Toast.LENGTH_SHORT).show();
+            dbQueries.close();
             finish();
         } else {
             tvError.setText("Nom d'utilisateur déjà existant");

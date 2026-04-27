@@ -328,6 +328,7 @@ public class DatabaseQueries {
         return reservations;
     }
     // Ajoutez cette méthode dans DatabaseQueries.java
+// Assurez-vous que cette méthode existe et est correcte
     public List<Reservation> getClientReservations(int clientId) {
         List<Reservation> reservations = new ArrayList<>();
         String query = "SELECT r.*, c." + DatabaseHelper.COL_CLIENT_NOM + ", c." + DatabaseHelper.COL_CLIENT_PRENOM +
@@ -341,23 +342,39 @@ public class DatabaseQueries {
 
         if (cursor.moveToFirst()) {
             do {
+                int colId = cursor.getColumnIndex(DatabaseHelper.COL_RES_ID);
+                int colClientId = cursor.getColumnIndex(DatabaseHelper.COL_RES_CLIENT_ID);
+                int colCarId = cursor.getColumnIndex(DatabaseHelper.COL_RES_CAR_ID);
+                int colDateDebut = cursor.getColumnIndex(DatabaseHelper.COL_RES_DATE_DEBUT);
+                int colDateFin = cursor.getColumnIndex(DatabaseHelper.COL_RES_DATE_FIN);
+                int colPrix = cursor.getColumnIndex(DatabaseHelper.COL_RES_PRIX_TOTAL);
+                int colStatut = cursor.getColumnIndex(DatabaseHelper.COL_RES_STATUT);
+                int colClientNom = cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_NOM);
+                int colClientPrenom = cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_PRENOM);
+                int colCarMarque = cursor.getColumnIndex(DatabaseHelper.COL_CAR_MARQUE);
+                int colCarModele = cursor.getColumnIndex(DatabaseHelper.COL_CAR_MODELE);
+
                 Reservation reservation = new Reservation(
-                        cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COL_RES_ID)),
-                        cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COL_RES_CLIENT_ID)),
-                        cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COL_RES_CAR_ID)),
-                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_RES_DATE_DEBUT)),
-                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_RES_DATE_FIN)),
-                        cursor.getDouble(cursor.getColumnIndex(DatabaseHelper.COL_RES_PRIX_TOTAL)),
-                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_RES_STATUT))
+                        cursor.getInt(colId),
+                        cursor.getInt(colClientId),
+                        cursor.getInt(colCarId),
+                        cursor.getString(colDateDebut),
+                        cursor.getString(colDateFin),
+                        cursor.getDouble(colPrix),
+                        cursor.getString(colStatut)
                 );
-                reservation.setClientName(cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_PRENOM)) + " " +
-                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CLIENT_NOM)));
-                reservation.setCarName(cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CAR_MARQUE)) + " " +
-                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COL_CAR_MODELE)));
+
+                if (colClientNom >= 0 && colClientPrenom >= 0) {
+                    reservation.setClientName(cursor.getString(colClientPrenom) + " " + cursor.getString(colClientNom));
+                }
+
+                if (colCarMarque >= 0 && colCarModele >= 0) {
+                    reservation.setCarName(cursor.getString(colCarMarque) + " " + cursor.getString(colCarModele));
+                }
+
                 reservations.add(reservation);
             } while (cursor.moveToNext());
         }
         cursor.close();
         return reservations;
-    }
-}
+    }}
