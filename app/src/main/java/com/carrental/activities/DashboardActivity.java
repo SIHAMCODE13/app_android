@@ -24,7 +24,7 @@ public class DashboardActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
-        requestNotificationPermission(); // Ajouter cette lignelink
+        requestNotificationPermission();
 
         sessionManager = new SessionManager(this);
 

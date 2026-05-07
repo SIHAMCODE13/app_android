@@ -2,6 +2,7 @@ package com.carrental.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
@@ -69,9 +70,10 @@ public class ReservationListActivity extends AppCompatActivity {
 
             boolean canEdit = sessionManager.canModify();
             boolean canCancel = true;
+            boolean canPay = sessionManager.isClient();
 
-            adapter = new ReservationAdapter(reservationList, canEdit, canCancel,
-                    this::onEditClick, this::onCancelClick);
+            adapter = new ReservationAdapter(reservationList, canEdit, canCancel, canPay,
+                    this::onEditClick, this::onCancelClick, this::onPayClick);
             recyclerView.setAdapter(adapter);
 
             if (reservationList == null || reservationList.isEmpty()) {
@@ -103,7 +105,6 @@ public class ReservationListActivity extends AppCompatActivity {
                     dbQueries.close();
 
                     if (result > 0) {
-                        // Envoyer notification d'annulation
                         if (sessionManager.isClient()) {
                             notificationHelper.showClientCancellationNotification(reservation.getCarName());
                         } else {
@@ -119,6 +120,30 @@ public class ReservationListActivity extends AppCompatActivity {
                     }
                 })
                 .setNegativeButton("Non", null)
+                .show();
+    }
+
+    private void onPayClick(Reservation reservation) {
+        new AlertDialog.Builder(this)
+                .setTitle("Paiement")
+                .setMessage("Voulez-vous payer " + String.format("%.2f DT", reservation.getPrixTotal()) + " pour cette réservation ?")
+                .setPositiveButton("Payer", (dialog, which) -> {
+                    dbQueries.open();
+                    String result = dbQueries.processPayment(
+                            reservation.getId(),
+                            reservation.getClientId(),
+                            reservation.getPrixTotal()
+                    );
+                    dbQueries.close();
+
+                    if ("SUCCESS".equals(result)) {
+                        Toast.makeText(this, "Paiement réussi !", Toast.LENGTH_SHORT).show();
+                        loadReservations();
+                    } else {
+                        Toast.makeText(this, "Paiement échoué: " + result, Toast.LENGTH_LONG).show();
+                    }
+                })
+                .setNegativeButton("Annuler", null)
                 .show();
     }
 

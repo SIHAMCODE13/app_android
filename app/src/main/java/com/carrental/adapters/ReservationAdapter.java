@@ -15,20 +15,24 @@ public class ReservationAdapter extends RecyclerView.Adapter<ReservationAdapter.
     private List<Reservation> reservationList;
     private boolean canEdit;
     private boolean canCancel;
+    private boolean canPay;
     private OnItemClickListener editListener;
     private OnItemClickListener cancelListener;
+    private OnItemClickListener payListener;
 
     public interface OnItemClickListener {
         void onItemClick(Reservation reservation);
     }
 
-    public ReservationAdapter(List<Reservation> reservationList, boolean canEdit, boolean canCancel,
-                              OnItemClickListener editListener, OnItemClickListener cancelListener) {
+    public ReservationAdapter(List<Reservation> reservationList, boolean canEdit, boolean canCancel, boolean canPay,
+                              OnItemClickListener editListener, OnItemClickListener cancelListener, OnItemClickListener payListener) {
         this.reservationList = reservationList;
         this.canEdit = canEdit;
         this.canCancel = canCancel;
+        this.canPay = canPay;
         this.editListener = editListener;
         this.cancelListener = cancelListener;
+        this.payListener = payListener;
     }
 
     @Override
@@ -47,25 +51,35 @@ public class ReservationAdapter extends RecyclerView.Adapter<ReservationAdapter.
         holder.tvStatus.setText(reservation.getStatut());
 
         int statusColor;
-        if (reservation.getStatut().equals("ACTIVE")) {
+        String status = reservation.getStatut();
+        if ("ACTIVE".equals(status)) {
             statusColor = holder.itemView.getContext().getColor(android.R.color.holo_green_dark);
+        } else if ("PAID".equals(status)) {
+            statusColor = holder.itemView.getContext().getColor(android.R.color.holo_blue_dark);
         } else {
             statusColor = holder.itemView.getContext().getColor(android.R.color.holo_red_dark);
         }
         holder.tvStatus.setTextColor(statusColor);
 
-        if (canEdit) {
+        if (canEdit && "ACTIVE".equals(status)) {
             holder.btnEdit.setVisibility(View.VISIBLE);
             holder.btnEdit.setOnClickListener(v -> editListener.onItemClick(reservation));
         } else {
             holder.btnEdit.setVisibility(View.GONE);
         }
 
-        if (canCancel && reservation.getStatut().equals("ACTIVE")) {
+        if (canCancel && "ACTIVE".equals(status)) {
             holder.btnCancel.setVisibility(View.VISIBLE);
             holder.btnCancel.setOnClickListener(v -> cancelListener.onItemClick(reservation));
         } else {
             holder.btnCancel.setVisibility(View.GONE);
+        }
+
+        if (canPay && "ACTIVE".equals(status)) {
+            holder.btnPay.setVisibility(View.VISIBLE);
+            holder.btnPay.setOnClickListener(v -> payListener.onItemClick(reservation));
+        } else {
+            holder.btnPay.setVisibility(View.GONE);
         }
     }
 
@@ -76,7 +90,7 @@ public class ReservationAdapter extends RecyclerView.Adapter<ReservationAdapter.
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvClientCar, tvDates, tvPrice, tvStatus;
-        ImageButton btnEdit, btnCancel;
+        ImageButton btnEdit, btnCancel, btnPay;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -86,6 +100,7 @@ public class ReservationAdapter extends RecyclerView.Adapter<ReservationAdapter.
             tvStatus = itemView.findViewById(R.id.tvStatus);
             btnEdit = itemView.findViewById(R.id.btnEdit);
             btnCancel = itemView.findViewById(R.id.btnCancel);
+            btnPay = itemView.findViewById(R.id.btnPay);
         }
     }
 }

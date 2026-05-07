@@ -9,13 +9,50 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <TextView
+            android:id="@+id/tvUserAccountHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Compte Utilisateur (pour le login)"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/etUsername"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nom d'utilisateur"
+            android:inputType="text"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/etPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Mot de passe"
+            android:inputType="textPassword"
+            android:layout_marginBottom="16dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#CCCCCC"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Informations Personnelles"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
         <EditText
             android:id="@+id/etNom"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Nom"
             android:inputType="text"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="8dp" />
 
         <EditText
             android:id="@+id/etPrenom"
@@ -23,7 +60,7 @@
             android:layout_height="wrap_content"
             android:hint="Prénom"
             android:inputType="text"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="8dp" />
 
         <EditText
             android:id="@+id/etEmail"
@@ -31,7 +68,7 @@
             android:layout_height="wrap_content"
             android:hint="Email"
             android:inputType="textEmailAddress"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="8dp" />
 
         <EditText
             android:id="@+id/etTelephone"
@@ -39,6 +76,14 @@
             android:layout_height="wrap_content"
             android:hint="Téléphone"
             android:inputType="phone"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/etSolde"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Solde initial (DT)"
+            android:inputType="numberDecimal"
             android:layout_marginBottom="24dp" />
 
         <Button

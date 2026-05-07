@@ -7,8 +7,8 @@ public class Client {
     private String email;
     private String telephone;
     private int userId;
+    private double solde;
 
-    // Constructeur complet avec userId
     public Client(int id, String nom, String prenom, String email, String telephone, int userId) {
         this.id = id;
         this.nom = nom;
@@ -16,16 +16,17 @@ public class Client {
         this.email = email;
         this.telephone = telephone;
         this.userId = userId;
+        this.solde = 0.0;
     }
 
-    // Constructeur sans userId (pour la compatibilité)
-    public Client(int id, String nom, String prenom, String email, String telephone) {
+    public Client(int id, String nom, String prenom, String email, String telephone, int userId, double solde) {
         this.id = id;
         this.nom = nom;
         this.prenom = prenom;
         this.email = email;
         this.telephone = telephone;
-        this.userId = -1;
+        this.userId = userId;
+        this.solde = solde;
     }
 
     public int getId() { return id; }
@@ -40,6 +41,8 @@ public class Client {
     public void setTelephone(String telephone) { this.telephone = telephone; }
     public int getUserId() { return userId; }
     public void setUserId(int userId) { this.userId = userId; }
+    public double getSolde() { return solde; }
+    public void setSolde(double solde) { this.solde = solde; }
 
     @Override
     public String toString() {
