@@ -6,13 +6,14 @@
     android:orientation="vertical"
     android:background="#F5F5F5">
 
-    <!-- Barre d'en-tête avec titre et bouton déconnexion -->
+    <!-- Barre d'en-tête avec titre et bouton profil/déconnexion -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="16dp"
-        android:background="@color/colorPrimary">
+        android:background="@color/colorPrimary"
+        android:gravity="center_vertical">
 
         <TextView
             android:layout_width="0dp"
@@ -23,15 +24,22 @@
             android:textSize="20sp"
             android:textStyle="bold" />
 
-        <Button
+        <ImageButton
+            android:id="@+id/btnProfile"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_menu_myplaces"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="@android:color/white"
+            android:layout_marginEnd="8dp" />
+
+        <ImageButton
             android:id="@+id/btnLogout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Déconnexion"
-            android:backgroundTint="@android:color/transparent"
-            android:textColor="@android:color/white"
-            android:drawableStart="@android:drawable/ic_menu_close_clear_cancel"
-            android:drawablePadding="8dp" />
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="@android:color/white" />
 
     </LinearLayout>
 
@@ -48,7 +56,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:columnCount="2"
-        android:rowCount="2"
         android:layout_margin="16dp">
 
         <androidx.cardview.widget.CardView

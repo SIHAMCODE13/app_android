@@ -5,7 +5,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,7 +17,7 @@ public class DashboardActivity extends AppCompatActivity {
 
     private SessionManager sessionManager;
     private TextView tvWelcome;
-    private Button btnLogout;
+    private ImageButton btnLogout, btnProfile;
     private CardView cardCars, cardClients, cardReservations, cardPayments;
 
     @Override
@@ -30,6 +30,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         tvWelcome = findViewById(R.id.tvWelcome);
         btnLogout = findViewById(R.id.btnLogout);
+        btnProfile = findViewById(R.id.btnProfile);
         cardCars = findViewById(R.id.cardCars);
         cardClients = findViewById(R.id.cardClients);
         cardReservations = findViewById(R.id.cardReservations);
@@ -50,6 +51,10 @@ public class DashboardActivity extends AppCompatActivity {
             Toast.makeText(DashboardActivity.this, "Déconnecté", Toast.LENGTH_SHORT).show();
         });
 
+        btnProfile.setOnClickListener(v -> {
+            startActivity(new Intent(DashboardActivity.this, ProfileActivity.class));
+        });
+
         cardCars.setOnClickListener(v ->
                 startActivity(new Intent(DashboardActivity.this, CarListActivity.class)));
 
@@ -62,6 +67,7 @@ public class DashboardActivity extends AppCompatActivity {
         cardPayments.setOnClickListener(v ->
                 startActivity(new Intent(DashboardActivity.this, PaymentHistoryActivity.class)));
     }
+
     private void requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)

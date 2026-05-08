@@ -13,6 +13,15 @@
         android:orientation="horizontal"
         android:padding="12dp">
 
+        <ImageView
+            android:id="@+id/ivCar"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginEnd="12dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_car_white"
+            app:tint="@color/colorPrimary" />
+
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"

@@ -1,6 +1,7 @@
 package com.carrental.database;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.content.ContentValues;
@@ -8,7 +9,7 @@ import android.content.ContentValues;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "car_rental.db";
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 5;
 
     // Table names
     public static final String TABLE_USER = "Utilisateur";
@@ -30,6 +31,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COL_CAR_ANNEE = "annee";
     public static final String COL_CAR_PRIX_JOUR = "prix_jour";
     public static final String COL_CAR_DISPONIBLE = "disponible";
+    public static final String COL_CAR_IMAGE = "image";
 
     // Client table columns
     public static final String COL_CLIENT_ID = "id";
@@ -70,7 +72,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     COL_CAR_MODELE + " TEXT NOT NULL, " +
                     COL_CAR_ANNEE + " INTEGER NOT NULL, " +
                     COL_CAR_PRIX_JOUR + " REAL NOT NULL, " +
-                    COL_CAR_DISPONIBLE + " INTEGER DEFAULT 1)";
+                    COL_CAR_DISPONIBLE + " INTEGER DEFAULT 1, " +
+                    COL_CAR_IMAGE + " TEXT)";
 
     private static final String CREATE_CLIENT_TABLE =
             "CREATE TABLE " + TABLE_CLIENT + " (" +
@@ -155,7 +158,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COL_CAR_ANNEE, 2022);
         values.put(COL_CAR_PRIX_JOUR, 50.0);
         values.put(COL_CAR_DISPONIBLE, 1);
-        long carId1 = db.insert(TABLE_CAR, null, values);
+        values.put(COL_CAR_IMAGE, "clio_2022");
+        db.insert(TABLE_CAR, null, values);
 
         values = new ContentValues();
         values.put(COL_CAR_MARQUE, "Peugeot");
@@ -163,12 +167,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COL_CAR_ANNEE, 2023);
         values.put(COL_CAR_PRIX_JOUR, 60.0);
         values.put(COL_CAR_DISPONIBLE, 1);
-        long carId2 = db.insert(TABLE_CAR, null, values);
+        values.put(COL_CAR_IMAGE, "peugeot_208");
+        db.insert(TABLE_CAR, null, values);
 
         // Insert sample reservation
         values = new ContentValues();
         values.put(COL_RES_CLIENT_ID, clientId);
-        values.put(COL_RES_CAR_ID, carId1);
+        values.put(COL_RES_CAR_ID, 1); // Assuming Clio is ID 1
         values.put(COL_RES_DATE_DEBUT, "2024-01-15");
         values.put(COL_RES_DATE_FIN, "2024-01-20");
         values.put(COL_RES_PRIX_TOTAL, 250.0);
@@ -181,13 +186,31 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         if (oldVersion < 4) {
             db.execSQL("ALTER TABLE " + TABLE_CLIENT + " ADD COLUMN " + COL_CLIENT_SOLDE + " REAL DEFAULT 0");
             db.execSQL(CREATE_PAYMENT_TABLE);
-        } else {
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_PAYMENT);
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_RESERVATION);
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_CLIENT);
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_CAR);
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_USER);
-            onCreate(db);
         }
+        if (oldVersion < 5) {
+            db.execSQL("ALTER TABLE " + TABLE_CAR + " ADD COLUMN " + COL_CAR_IMAGE + " TEXT");
+        }
+    }
+
+    /**
+     * Vérifie si une voiture est disponible pour une période donnée.
+     * Logique de chevauchement : (date_debut <= endDate AND date_fin >= startDate)
+     */
+    public boolean isCarAvailable(int carId, String startDate, String endDate) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT COUNT(*) FROM " + TABLE_RESERVATION +
+                " WHERE " + COL_RES_CAR_ID + " = ? " +
+                " AND " + COL_RES_STATUT + " = 'ACTIVE' " +
+                " AND (" + COL_RES_DATE_DEBUT + " <= ? AND " + COL_RES_DATE_FIN + " >= ?)";
+
+        Cursor cursor = db.rawQuery(query, new String[]{String.valueOf(carId), endDate, startDate});
+        boolean available = true;
+        if (cursor != null && cursor.moveToFirst()) {
+            if (cursor.getInt(0) > 0) {
+                available = false; // Il y a au moins une réservation qui chevauche
+            }
+            cursor.close();
+        }
+        return available;
     }
 }

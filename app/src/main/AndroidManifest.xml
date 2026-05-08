@@ -31,6 +31,7 @@
         <activity android:name=".activities.ReservationListActivity" />
         <activity android:name=".activities.ReservationFormActivity" />
         <activity android:name=".activities.PaymentHistoryActivity" />
+        <activity android:name=".activities.ProfileActivity" />
 
     </application>
 

@@ -7,6 +7,7 @@ public class Car {
     private int annee;
     private double prixJour;
     private boolean disponible;
+    private String image;
 
     public Car(int id, String marque, String modele, int annee, double prixJour, boolean disponible) {
         this.id = id;
@@ -15,6 +16,16 @@ public class Car {
         this.annee = annee;
         this.prixJour = prixJour;
         this.disponible = disponible;
+    }
+
+    public Car(int id, String marque, String modele, int annee, double prixJour, boolean disponible, String image) {
+        this.id = id;
+        this.marque = marque;
+        this.modele = modele;
+        this.annee = annee;
+        this.prixJour = prixJour;
+        this.disponible = disponible;
+        this.image = image;
     }
 
     // Getters and Setters
@@ -30,6 +41,8 @@ public class Car {
     public void setPrixJour(double prixJour) { this.prixJour = prixJour; }
     public boolean isDisponible() { return disponible; }
     public void setDisponible(boolean disponible) { this.disponible = disponible; }
+    public String getImage() { return image; }
+    public void setImage(String image) { this.image = image; }
 
     @Override
     public String toString() {

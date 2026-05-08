@@ -58,6 +58,26 @@ public class DatabaseQueries {
         return null;
     }
 
+    public User getUserById(int id) {
+        Cursor cursor = database.query(DatabaseHelper.TABLE_USER,
+                new String[]{DatabaseHelper.COL_USER_ID, DatabaseHelper.COL_USER_USERNAME,
+                        DatabaseHelper.COL_USER_PASSWORD, DatabaseHelper.COL_USER_ROLE},
+                DatabaseHelper.COL_USER_ID + "=?",
+                new String[]{String.valueOf(id)}, null, null, null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            User user = new User(
+                    cursor.getInt(0),
+                    cursor.getString(1),
+                    cursor.getString(2),
+                    cursor.getString(3)
+            );
+            cursor.close();
+            return user;
+        }
+        return null;
+    }
+
     public boolean registerUser(String username, String password, String role) {
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.COL_USER_USERNAME, username);
@@ -66,6 +86,15 @@ public class DatabaseQueries {
 
         long result = database.insert(DatabaseHelper.TABLE_USER, null, values);
         return result != -1;
+    }
+
+    public int updateUser(User user) {
+        ContentValues values = new ContentValues();
+        values.put(DatabaseHelper.COL_USER_USERNAME, user.getUsername());
+        values.put(DatabaseHelper.COL_USER_PASSWORD, user.getPassword());
+        
+        return database.update(DatabaseHelper.TABLE_USER, values,
+                DatabaseHelper.COL_USER_ID + "=?", new String[]{String.valueOf(user.getId())});
     }
 
     public int getLastInsertedUserId() {
@@ -86,6 +115,7 @@ public class DatabaseQueries {
         values.put(DatabaseHelper.COL_CAR_ANNEE, car.getAnnee());
         values.put(DatabaseHelper.COL_CAR_PRIX_JOUR, car.getPrixJour());
         values.put(DatabaseHelper.COL_CAR_DISPONIBLE, car.isDisponible() ? 1 : 0);
+        values.put(DatabaseHelper.COL_CAR_IMAGE, car.getImage());
 
         return database.insert(DatabaseHelper.TABLE_CAR, null, values);
     }
@@ -97,6 +127,7 @@ public class DatabaseQueries {
         values.put(DatabaseHelper.COL_CAR_ANNEE, car.getAnnee());
         values.put(DatabaseHelper.COL_CAR_PRIX_JOUR, car.getPrixJour());
         values.put(DatabaseHelper.COL_CAR_DISPONIBLE, car.isDisponible() ? 1 : 0);
+        values.put(DatabaseHelper.COL_CAR_IMAGE, car.getImage());
 
         return database.update(DatabaseHelper.TABLE_CAR, values,
                 DatabaseHelper.COL_CAR_ID + "=?", new String[]{String.valueOf(car.getId())});
@@ -119,7 +150,8 @@ public class DatabaseQueries {
                         cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CAR_MODELE)),
                         cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CAR_ANNEE)),
                         cursor.getDouble(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CAR_PRIX_JOUR)),
-                        cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CAR_DISPONIBLE)) == 1
+                        cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CAR_DISPONIBLE)) == 1,
+                        cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CAR_IMAGE))
                 );
                 cars.add(car);
             } while (cursor.moveToNext());
@@ -140,12 +172,37 @@ public class DatabaseQueries {
                     cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CAR_MODELE)),
                     cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CAR_ANNEE)),
                     cursor.getDouble(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CAR_PRIX_JOUR)),
-                    cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CAR_DISPONIBLE)) == 1
+                    cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CAR_DISPONIBLE)) == 1,
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CAR_IMAGE))
             );
             cursor.close();
             return car;
         }
         return null;
+    }
+
+    public boolean isCarAvailable(int carId, String startDate, String endDate) {
+        String query = "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_RESERVATION +
+                " WHERE " + DatabaseHelper.COL_RES_CAR_ID + " = ? " +
+                " AND " + DatabaseHelper.COL_RES_STATUT + " = 'ACTIVE' " +
+                " AND (" + DatabaseHelper.COL_RES_DATE_DEBUT + " <= ? AND " + 
+                DatabaseHelper.COL_RES_DATE_FIN + " >= ?)";
+
+        Cursor cursor = database.rawQuery(query, new String[]{
+                String.valueOf(carId),
+                endDate,
+                startDate
+        });
+
+        boolean available = true;
+        if (cursor != null && cursor.moveToFirst()) {
+            int count = cursor.getInt(0);
+            if (count > 0) {
+                available = false;
+            }
+            cursor.close();
+        }
+        return available;
     }
 
     // Client queries
