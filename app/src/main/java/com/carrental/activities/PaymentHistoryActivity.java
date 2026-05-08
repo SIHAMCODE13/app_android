@@ -43,10 +43,20 @@ public class PaymentHistoryActivity extends AppCompatActivity {
 
     private void loadPayments() {
         dbQueries.open();
-        List<Payment> payments = dbQueries.getAllPayments();
+        List<Payment> payments;
+
+        // Filtrage par rôle pour la confidentialité
+        if (sessionManager.isClient()) {
+            int clientId = sessionManager.getClientId();
+            payments = dbQueries.getPaymentsByClient(clientId);
+        } else {
+            // L'administrateur et l'employé voient tout
+            payments = dbQueries.getAllPayments();
+        }
+        
         dbQueries.close();
 
-        if (payments.isEmpty()) {
+        if (payments == null || payments.isEmpty()) {
             tvEmpty.setVisibility(View.VISIBLE);
             recyclerView.setVisibility(View.GONE);
         } else {
@@ -83,7 +93,7 @@ public class PaymentHistoryActivity extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return payments.size();
+            return payments != null ? payments.size() : 0;
         }
 
         class ViewHolder extends RecyclerView.ViewHolder {
