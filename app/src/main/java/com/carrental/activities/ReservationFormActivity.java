@@ -99,28 +99,14 @@ public class ReservationFormActivity extends AppCompatActivity {
                         android.R.layout.simple_spinner_item, clientList);
                 clientAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                 spClient.setAdapter(clientAdapter);
-            } else if (!isClientMode && (clientList == null || clientList.isEmpty())) {
-                Toast.makeText(this, "Aucun client trouvé. Veuillez d'abord ajouter un client.", Toast.LENGTH_LONG).show();
             }
 
             if (carList != null && !carList.isEmpty()) {
-                List<Car> availableCars = new java.util.ArrayList<>();
-                for (Car car : carList) {
-                    if (car.isDisponible() || (reservationId != -1)) {
-                        availableCars.add(car);
-                    }
-                }
-
-                if (availableCars.isEmpty()) {
-                    Toast.makeText(this, "Aucune voiture disponible", Toast.LENGTH_LONG).show();
-                }
-
+                // FIX BUG 2: Show all cars, availability is checked at save time
                 ArrayAdapter<Car> carAdapter = new ArrayAdapter<>(this,
-                        android.R.layout.simple_spinner_item, availableCars);
+                        android.R.layout.simple_spinner_item, carList);
                 carAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                 spCar.setAdapter(carAdapter);
-            } else {
-                Toast.makeText(this, "Aucune voiture trouvée. Veuillez d'abord ajouter une voiture.", Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -215,8 +201,7 @@ public class ReservationFormActivity extends AppCompatActivity {
             long days = diff / (1000 * 60 * 60 * 24);
 
             if (days <= 0) {
-                Toast.makeText(this, "Sélectionnez au moins 1 jour", Toast.LENGTH_SHORT).show();
-                return;
+                days = 1; // Minimum 1 jour
             }
 
             double total = days * selectedCar.getPrixJour();
@@ -229,12 +214,13 @@ public class ReservationFormActivity extends AppCompatActivity {
 
     private void saveReservation() {
         try {
-            if (spCar.getSelectedItem() == null) {
+            Car selectedCar = (Car) spCar.getSelectedItem();
+            if (selectedCar == null) {
                 Toast.makeText(this, "Sélectionnez une voiture", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            if (!isClientMode && (spClient.getSelectedItem() == null || clientList == null || clientList.isEmpty())) {
+            if (!isClientMode && (spClient.getSelectedItem() == null)) {
                 Toast.makeText(this, "Sélectionnez un client", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -247,8 +233,12 @@ public class ReservationFormActivity extends AppCompatActivity {
                 return;
             }
 
-            if (!ValidationUtils.isValidDateRange(dateDebut, dateFin)) {
-                Toast.makeText(this, "Date fin doit être après date début", Toast.LENGTH_SHORT).show();
+            // FIX BUG 1: Vérifier la disponibilité avant d'enregistrer
+            dbQueries.open();
+            boolean available = dbQueries.isCarAvailable(selectedCar.getId(), dateDebut, dateFin, reservationId);
+            if (!available) {
+                Toast.makeText(this, "Désolé, cette voiture est déjà réservée pour ces dates.", Toast.LENGTH_LONG).show();
+                dbQueries.close();
                 return;
             }
 
@@ -256,11 +246,6 @@ public class ReservationFormActivity extends AppCompatActivity {
             String clientName = "";
             if (isClientMode) {
                 clientId = forcedClientId;
-                if (clientId == -1) {
-                    Toast.makeText(this, "Erreur: Client non trouvé", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                // Récupérer le nom du client
                 Client currentClient = dbQueries.getClient(clientId);
                 if (currentClient != null) {
                     clientName = currentClient.getPrenom() + " " + currentClient.getNom();
@@ -271,16 +256,8 @@ public class ReservationFormActivity extends AppCompatActivity {
                 clientName = selectedClient.getPrenom() + " " + selectedClient.getNom();
             }
 
-            Car selectedCar = (Car) spCar.getSelectedItem();
-
-            String prixTotalStr = tvPrixTotal.getText().toString().replace(" DT", "");
-            prixTotalStr = prixTotalStr.replace(",", ".");
+            String prixTotalStr = tvPrixTotal.getText().toString().replace(" DT", "").replace(",", ".");
             double prixTotal = Double.parseDouble(prixTotalStr);
-
-            if (prixTotal <= 0) {
-                Toast.makeText(this, "Calculez d'abord le prix total", Toast.LENGTH_SHORT).show();
-                return;
-            }
 
             Reservation reservation = new Reservation(reservationId, clientId,
                     selectedCar.getId(), dateDebut, dateFin, prixTotal, "ACTIVE");
@@ -289,35 +266,24 @@ public class ReservationFormActivity extends AppCompatActivity {
             if (reservationId == -1) {
                 result = dbQueries.addReservation(reservation);
                 if (result != -1) {
-                    // Envoyer les notifications
                     if (isClientMode) {
-                        // Notification pour le client
                         notificationHelper.showClientReservationNotification(
-                                selectedCar.getMarque() + " " + selectedCar.getModele(),
-                                dateDebut, dateFin
-                        );
+                                selectedCar.getMarque() + " " + selectedCar.getModele(), dateDebut, dateFin);
                     } else {
-                        // Notification pour l'admin/employé
                         notificationHelper.showReservationCreatedNotification(
-                                clientName,
-                                selectedCar.getMarque() + " " + selectedCar.getModele(),
-                                dateDebut, dateFin
-                        );
+                                clientName, selectedCar.getMarque() + " " + selectedCar.getModele(), dateDebut, dateFin);
                     }
-                    Toast.makeText(this, "Réservation créée avec succès", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Réservation créée", Toast.LENGTH_SHORT).show();
                     finish();
-                } else {
-                    Toast.makeText(this, "Erreur lors de la création de la réservation", Toast.LENGTH_LONG).show();
                 }
             } else {
                 result = dbQueries.updateReservation(reservation);
                 if (result > 0) {
                     Toast.makeText(this, "Réservation modifiée", Toast.LENGTH_SHORT).show();
                     finish();
-                } else {
-                    Toast.makeText(this, "Erreur lors de la modification", Toast.LENGTH_SHORT).show();
                 }
             }
+            dbQueries.close();
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(this, "Erreur: " + e.getMessage(), Toast.LENGTH_LONG).show();

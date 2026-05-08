@@ -181,23 +181,40 @@ public class DatabaseQueries {
         return null;
     }
 
-    public boolean isCarAvailable(int carId, String startDate, String endDate) {
+    // FIX BUG 2: Nouvelle méthode pour vérifier s'il existe une réservation ACTIVE ou PAID pour une voiture
+    public boolean hasActiveReservations(int carId) {
         String query = "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_RESERVATION +
                 " WHERE " + DatabaseHelper.COL_RES_CAR_ID + " = ? " +
-                " AND " + DatabaseHelper.COL_RES_STATUT + " = 'ACTIVE' " +
+                " AND (" + DatabaseHelper.COL_RES_STATUT + " = 'ACTIVE' OR " + DatabaseHelper.COL_RES_STATUT + " = 'PAID')";
+        Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(carId)});
+        boolean hasActive = false;
+        if (cursor != null && cursor.moveToFirst()) {
+            hasActive = cursor.getInt(0) > 0;
+            cursor.close();
+        }
+        return hasActive;
+    }
+
+    // FIX BUG 1 & 2: isCarAvailable amélioré (vérifie les chevauchements et permet d'exclure une réservation)
+    public boolean isCarAvailable(int carId, String startDate, String endDate, int excludeResId) {
+        // Logique de chevauchement : (DebutExistante <= FinDemandee) ET (FinExistante >= DebutDemandee)
+        String query = "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_RESERVATION +
+                " WHERE " + DatabaseHelper.COL_RES_CAR_ID + " = ? " +
+                " AND " + DatabaseHelper.COL_RES_ID + " != ? " +
+                " AND (" + DatabaseHelper.COL_RES_STATUT + " = 'ACTIVE' OR " + DatabaseHelper.COL_RES_STATUT + " = 'PAID') " +
                 " AND (" + DatabaseHelper.COL_RES_DATE_DEBUT + " <= ? AND " + 
                 DatabaseHelper.COL_RES_DATE_FIN + " >= ?)";
 
         Cursor cursor = database.rawQuery(query, new String[]{
                 String.valueOf(carId),
+                String.valueOf(excludeResId),
                 endDate,
                 startDate
         });
 
         boolean available = true;
         if (cursor != null && cursor.moveToFirst()) {
-            int count = cursor.getInt(0);
-            if (count > 0) {
+            if (cursor.getInt(0) > 0) {
                 available = false;
             }
             cursor.close();
@@ -300,6 +317,7 @@ public class DatabaseQueries {
     }
 
     // Reservation queries
+    // FIX BUG 2: SUPPRIMER la mise à jour manuelle de COL_CAR_DISPONIBLE
     public long addReservation(Reservation reservation) {
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.COL_RES_CLIENT_ID, reservation.getClientId());
@@ -309,16 +327,7 @@ public class DatabaseQueries {
         values.put(DatabaseHelper.COL_RES_PRIX_TOTAL, reservation.getPrixTotal());
         values.put(DatabaseHelper.COL_RES_STATUT, "ACTIVE");
 
-        long result = database.insert(DatabaseHelper.TABLE_RESERVATION, null, values);
-
-        if (result != -1) {
-            ContentValues carValues = new ContentValues();
-            carValues.put(DatabaseHelper.COL_CAR_DISPONIBLE, 0);
-            database.update(DatabaseHelper.TABLE_CAR, carValues,
-                    DatabaseHelper.COL_CAR_ID + "=?", new String[]{String.valueOf(reservation.getCarId())});
-        }
-
-        return result;
+        return database.insert(DatabaseHelper.TABLE_RESERVATION, null, values);
     }
 
     public int updateReservation(Reservation reservation) {
@@ -334,32 +343,13 @@ public class DatabaseQueries {
                 DatabaseHelper.COL_RES_ID + "=?", new String[]{String.valueOf(reservation.getId())});
     }
 
+    // FIX BUG 2: SUPPRIMER la remise à 1 de COL_CAR_DISPONIBLE
     public int cancelReservation(int reservationId) {
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.COL_RES_STATUT, "CANCELLED");
 
-        Cursor cursor = database.query(DatabaseHelper.TABLE_RESERVATION,
-                new String[]{DatabaseHelper.COL_RES_CAR_ID},
-                DatabaseHelper.COL_RES_ID + "=?", new String[]{String.valueOf(reservationId)},
-                null, null, null);
-
-        int carId = -1;
-        if (cursor.moveToFirst()) {
-            carId = cursor.getInt(0);
-        }
-        cursor.close();
-
-        int result = database.update(DatabaseHelper.TABLE_RESERVATION, values,
+        return database.update(DatabaseHelper.TABLE_RESERVATION, values,
                 DatabaseHelper.COL_RES_ID + "=?", new String[]{String.valueOf(reservationId)});
-
-        if (result > 0 && carId != -1) {
-            ContentValues carValues = new ContentValues();
-            carValues.put(DatabaseHelper.COL_CAR_DISPONIBLE, 1);
-            database.update(DatabaseHelper.TABLE_CAR, carValues,
-                    DatabaseHelper.COL_CAR_ID + "=?", new String[]{String.valueOf(carId)});
-        }
-
-        return result;
     }
 
     public List<Reservation> getAllReservations() {
@@ -486,6 +476,39 @@ public class DatabaseQueries {
                 " JOIN " + DatabaseHelper.TABLE_CAR + " v ON r." + DatabaseHelper.COL_RES_CAR_ID + " = v." + DatabaseHelper.COL_CAR_ID;
 
         Cursor cursor = database.rawQuery(query, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                Payment payment = new Payment(
+                        cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_PAY_ID)),
+                        cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_PAY_RES_ID)),
+                        cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_PAY_CLIENT_ID)),
+                        cursor.getDouble(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_PAY_AMOUNT)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_PAY_DATE))
+                );
+                payment.setClientName(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CLIENT_PRENOM)) + " " +
+                        cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CLIENT_NOM)));
+                payment.setCarName(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CAR_MARQUE)) + " " +
+                        cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CAR_MODELE)));
+                payments.add(payment);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return payments;
+    }
+
+    // FIX BUG 3: Nouvelle méthode pour récupérer les paiements d'un client spécifique
+    public List<Payment> getPaymentsByClient(int clientId) {
+        List<Payment> payments = new ArrayList<>();
+        String query = "SELECT p.*, c." + DatabaseHelper.COL_CLIENT_NOM + ", c." + DatabaseHelper.COL_CLIENT_PRENOM +
+                ", v." + DatabaseHelper.COL_CAR_MARQUE + ", v." + DatabaseHelper.COL_CAR_MODELE +
+                " FROM " + DatabaseHelper.TABLE_PAYMENT + " p" +
+                " JOIN " + DatabaseHelper.TABLE_CLIENT + " c ON p." + DatabaseHelper.COL_PAY_CLIENT_ID + " = c." + DatabaseHelper.COL_CLIENT_ID +
+                " JOIN " + DatabaseHelper.TABLE_RESERVATION + " r ON p." + DatabaseHelper.COL_PAY_RES_ID + " = r." + DatabaseHelper.COL_RES_ID +
+                " JOIN " + DatabaseHelper.TABLE_CAR + " v ON r." + DatabaseHelper.COL_RES_CAR_ID + " = v." + DatabaseHelper.COL_CAR_ID +
+                " WHERE p." + DatabaseHelper.COL_PAY_CLIENT_ID + " = ?";
+
+        Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(clientId)});
 
         if (cursor.moveToFirst()) {
             do {

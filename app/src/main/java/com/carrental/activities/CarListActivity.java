@@ -39,7 +39,6 @@ public class CarListActivity extends AppCompatActivity {
 
         dbQueries = new DatabaseQueries(this);
 
-        // Les clients ne peuvent pas ajouter de voitures
         if (sessionManager.isClient()) {
             btnAdd.setVisibility(View.GONE);
         } else {
@@ -55,9 +54,15 @@ public class CarListActivity extends AppCompatActivity {
     private void loadCars() {
         dbQueries.open();
         carList = dbQueries.getAllCars();
+        
+        // FIX BUG 2: Recalculer la disponibilité réelle dynamiquement
+        for (Car car : carList) {
+            boolean hasConflict = dbQueries.hasActiveReservations(car.getId());
+            car.setDisponible(!hasConflict);
+        }
+        
         dbQueries.close();
 
-        // Pour les clients, masquer les boutons d'édition et suppression
         boolean canEdit = sessionManager.canModify();
         boolean canDelete = sessionManager.canDelete();
 
@@ -94,8 +99,6 @@ public class CarListActivity extends AppCompatActivity {
                     })
                     .setNegativeButton("Non", null)
                     .show();
-        } else {
-            Toast.makeText(this, "Vous n'avez pas les droits pour supprimer", Toast.LENGTH_SHORT).show();
         }
     }
 
